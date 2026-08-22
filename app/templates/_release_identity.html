@@ -1,0 +1,15 @@
+{% if project.release %}
+<section class="release-identity{% if release_variant|default('') %} release-identity-{{ release_variant }}{% endif %}" aria-label="当前交付版本">
+  <div class="release-heading"><span>当前交付版本</span><strong>{{ project.release.project_version }}</strong></div>
+  <dl class="release-details">
+    <div><dt>固定提交</dt><dd><code data-release-commit-short>{{ project.release.code_commit[:12] }}</code><code data-release-commit-full hidden>{{ project.release.code_commit }}</code><button type="button" class="release-action" data-release-expand aria-expanded="false">展开</button><button type="button" class="release-action" data-release-copy data-copy-text="{{ project.release.code_commit }}">复制</button></dd></div>
+    <div><dt>分支</dt><dd>{{ project.release.branch }}</dd></div>
+    <div><dt>接口基线</dt><dd>{{ project.release.api_contract }}</dd></div>
+    <div><dt>迁移基线</dt><dd>{{ project.release.migration_range }}</dd></div>
+    <div><dt>当前状态</dt><dd>{{ project.release.status }}</dd></div>
+  </dl>
+  {% if request.app.state.dashboard_mode != 'read_only_local' %}
+  <a class="release-handoff-link" href="/project-status/collaboration#handoff-HO-DT-003">查看 HO-DT-003 提测交接 →</a>
+  {% endif %}
+</section>
+{% endif %}

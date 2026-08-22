@@ -1,0 +1,38 @@
+{# Shared navigation: keep the five primary modules in one place. #}
+{% set current_path = request.url.path %}
+{% set is_panel = request.app.state.dashboard_mode == 'read_only_local' %}
+{% set is_overview = current_path == "/project-status" %}
+{% set is_quality_workspace = current_path.startswith("/project-status/tests") or current_path.startswith("/project-status/test-runs/") or current_path.startswith("/project-status/defects") or (current_path.startswith("/project-status/stages/") and current_path.endswith("/tests")) %}
+{% set is_workspace = current_path in ("/project-status/collaboration", "/project-status/development", "/project-status/frontend") or is_quality_workspace %}
+{% set is_stage_page = current_path.startswith("/project-status/stages/") and not current_path.endswith("/tests") %}
+{% set is_delivery = current_path == "/project-status/technical-reviews" or is_stage_page %}
+{% set is_documents = current_path.startswith("/project-status/documents") %}
+<div class="project-nav-stack">
+  <nav class="console-nav console-nav-primary" aria-label="项目一级导航">
+    <a class="{% if is_overview %}is-active{% endif %}" href="/project-status">项目总览</a>
+    {% if not is_panel %}<a class="{% if is_workspace %}is-active{% endif %}" href="/project-status/collaboration">工作区</a>{% endif %}
+    {% if not is_panel %}<a class="{% if is_delivery %}is-active{% endif %}" href="/project-status/technical-reviews">交付管理</a>{% endif %}
+    <a class="{% if is_quality_workspace %}is-active{% endif %}" href="/project-status/tests">质量工作区</a>
+    {% if not is_panel %}<a class="{% if is_documents %}is-active{% endif %}" href="/project-status/documents">项目文档</a>{% endif %}
+  </nav>
+
+  {% if not is_panel and is_workspace %}
+  <nav class="console-subnav" aria-label="工作区二级导航">
+    <a class="{% if current_path == '/project-status/collaboration' %}is-active{% endif %}" href="/project-status/collaboration">协作总览</a>
+    <a class="{% if current_path == '/project-status/development' %}is-active{% endif %}" href="/project-status/development">服务端工作区</a>
+    <a class="{% if current_path == '/project-status/frontend' %}is-active{% endif %}" href="/project-status/frontend">前端工作区</a>
+    <a class="{% if is_quality_workspace %}is-active{% endif %}" href="/project-status/tests">质量工作区</a>
+  </nav>
+  {% elif not is_panel and is_delivery %}
+  <nav class="console-subnav" aria-label="交付管理二级导航">
+    <a class="{% if current_path == '/project-status/technical-reviews' %}is-active{% endif %}" href="/project-status/technical-reviews">技术评审</a>
+    <a href="/project-status#stage-title">阶段路线</a>
+  </nav>
+  {% elif is_panel and is_quality_workspace %}
+  <nav class="console-subnav" aria-label="质量工作区二级导航">
+    <a class="{% if current_path == '/project-status/tests' %}is-active{% endif %}" href="/project-status/tests">质量总览</a>
+    <a class="{% if current_path == '/project-status/tests/case-design' %}is-active{% endif %}" href="/project-status/tests/case-design">Case 设计</a>
+    <a class="{% if current_path.startswith('/project-status/tests/automation') %}is-active{% endif %}" href="/project-status/tests/automation">辅助 UI 自动化</a>
+  </nav>
+  {% endif %}
+</div>

@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light">
+    <title>Case 设计 | {{ project.project_name }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='/project-status.css') }}">
+  </head>
+  <body data-last-updated="{{ project.last_updated }}">
+    <header class="topbar">
+      <div><p class="eyebrow">QUALITY WORKSPACE · 只读候选管理</p><h1>{{ project.project_name }}</h1></div>
+      {% include "_project_nav.html" %}
+    </header>
+
+    <main>
+      <section class="case-design-hero" aria-labelledby="case-design-title">
+        <div>
+          <p class="eyebrow">CASE DESIGN</p>
+          <h2 id="case-design-title">候选 Case 设计任务</h2>
+          <p>仅供测试侧审阅和整理：任务、覆盖关系与人工决定均保持只读。候选数据不进入正式 Case 统计，也不表示已执行、已通过或已准出。</p>
+        </div>
+        <aside aria-label="边界说明">
+          <strong>不改变正式口径</strong>
+          <span>不提供编辑、生成、AI 调用或执行入口。</span>
+        </aside>
+      </section>
+
+      {% if case_design.warnings %}
+      <section class="case-design-alert" role="alert" aria-live="polite">
+        <strong>候选任务数据待核对</strong>
+        {% for warning in case_design.warnings %}<p>{{ warning }}</p>{% endfor %}
+      </section>
+      {% endif %}
+
+      <section class="section-block case-design-section" aria-labelledby="case-design-list-title">
+        <div class="section-heading">
+          <div><p class="eyebrow">TASK REGISTRY</p><h2 id="case-design-list-title">生成任务列表</h2></div>
+          <p>输入基线、候选数量和覆盖状态仅反映测试资产当前记录。</p>
+        </div>
+        {% if case_design.tasks %}
+        <div class="case-design-list">
+          {% for task in case_design.tasks %}
+          <article class="case-design-card">
+            <div class="case-design-card-top">
+              <span class="case-design-id">{{ task.id }}</span>
+              <span class="test-status test-designing">{{ task.status }}</span>
+            </div>
+            <h3>{{ task.title }}</h3>
+            <dl class="case-design-summary">
+              <div><dt>阶段</dt><dd>{{ task.stage }}</dd></div>
+              <div><dt>功能点</dt><dd>{{ task.functional_point_count }}</dd></div>
+              <div><dt>候选 Case</dt><dd>{{ task.candidate_case_count }}</dd></div>
+              <div><dt>覆盖状态</dt><dd>{{ task.coverage_status }}</dd></div>
+              <div><dt>更新时间</dt><dd>{{ task.updated_at }}</dd></div>
+            </dl>
+            <div class="case-design-baselines" aria-label="输入基线">
+              <span>PRD：{{ task.input_baselines.prd or '未提供' }}</span>
+              <span>契约：{{ task.input_baselines.contract or '未提供' }}</span>
+              <span>错误码：{{ task.input_baselines.error_codes or '未提供' }}</span>
+            </div>
+            <a class="detail-link" href="/project-status/tests/case-design/{{ task.id }}">查看任务详情 →</a>
+          </article>
+          {% endfor %}
+        </div>
+        {% else %}
+        <p class="large-empty muted-copy">暂无可安全展示的生成任务。测试侧提供清单后，这里只会显示已校验的候选摘要。</p>
+        {% endif %}
+      </section>
+    </main>
+    <footer><span>候选 Case 仅供人工评审，不计入正式 Case、执行结果或缺陷结论。</span><a href="/project-status/tests">返回质量工作区</a></footer>
+  </body>
+</html>

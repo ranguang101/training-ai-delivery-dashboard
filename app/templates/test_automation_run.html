@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light">
+    <title>{{ run_id }} | 辅助 UI 自动化</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='/project-status.css') }}?v=test-automation-v2">
+  </head>
+  <body data-last-updated="{{ project.last_updated }}">
+    <header class="topbar"><div><h1>{{ project.project_name }}</h1></div>{% include "_project_nav.html" %}</header>
+    <main>
+      <section class="automation-hero" aria-labelledby="automation-run-title"><div><h2 id="automation-run-title">辅助运行详情</h2><p>本次为辅助自动化执行，不更新正式 Case 状态。原始报告、截图和运行器路径不会进入质量面板。</p></div></section>
+      <section data-test-automation-run-id="{{ run_id }}" aria-live="polite" aria-busy="true"><p class="delivery-loading">正在加载受控运行摘要…</p></section>
+    </main>
+    <footer><span>辅助执行结果仍待测试负责人复核。</span><a href="/project-status/tests/automation">返回辅助 UI 自动化</a></footer>
+    <script src="{{ url_for('static', path='/project-status.js') }}?v=test-automation-v2" defer></script>
+  </body>
+</html>

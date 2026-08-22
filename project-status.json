@@ -1,0 +1,518 @@
+{
+  "project_name": "晚托班 AI 教师提效系统",
+  "overall_status": "in_progress",
+  "progress_percent": 30,
+  "current_focus": "按模块推进：MVP-A 管理运营底座收口可复现基线与最小人工确认；MVP-B 人工每日学情闭环准备 P3 字段级契约、组合候选与审核台。",
+  "summary": "首个试用方向拆为 MVP-A 管理运营底座与 MVP-B 教师每日学情闭环。P4 是 MVP-B 稳定后的 AI 提效增强；P5—P7 为后续扩展；P8 是两个模块共同的最低运行保障。",
+  "last_updated": "2026-08-09T23:59:00+08:00",
+  "last_updated_display": "2026 年 8 月 9 日 23:59（北京时间）",
+  "release": {
+    "project_version": "0.1.0-p1",
+    "code_commit": "1c950ced792a3d8d2cb95fc6993fd8b05d3fb931",
+    "branch": "recovery/2026-08-09",
+    "api_contract": "P1-账号与权限接口契约-v1",
+    "migration_range": "v001—v008",
+    "status": "R0 收口中；P1 UI/人工验收中",
+    "updated_at": "2026-08-09 22:30"
+  },
+  "product_roadmap": {
+    "baseline": "PRD-BASELINE-20260809-001",
+    "source_document": "docs/requirements/product/产品迭代路线图-v1.md",
+    "current_position": "MVP-A 管理运营底座与 MVP-B 人工每日学情闭环并行规划中；两个模块均未准出或发布",
+    "versions": [
+      {"code": "MVP-A", "title": "管理运营底座", "status": "preparing", "scope": "P1 账号与权限、P2 学生与归属、P8 最低运行保障", "next_gate": "固定可复现组合候选，完成 P1/P2 最小人工确认与 P8 基线核对"},
+      {"code": "MVP-B", "title": "教师每日学情闭环（人工版）", "status": "preparing", "scope": "P3 教师文字记录、提交、审核、退回、更正与历史，以及共享审核台", "next_gate": "完成 TR-P3、字段级接口契约、组合候选、独立测试与产品验收"},
+      {"code": "MVP-B AI", "title": "教师每日学情闭环 AI 增强", "status": "planned", "scope": "P4 语音、转写、AI 候选文本与人工确认"},
+      {"code": "后续扩展", "title": "图片、错题与周报", "status": "planned", "scope": "P5—P7 图片批改、错题池、周报、练习与 PDF"},
+      {"code": "试用定版", "title": "机构综合试用", "status": "planned", "scope": "P8 完整运行演练与已完成模块的现场试用"}
+    ]
+  },
+  "delivery_lines": [
+    {
+      "id": "mvp-a-management-foundation",
+      "delivery_track": "management_operations_foundation",
+      "name": "MVP-A · 管理运营底座",
+      "display_label": "D1 · 模块范围已确认",
+      "source_role": "product",
+      "evidence_level": "D1",
+      "verified_at": "2026-08-11",
+      "delivery_status": "integration",
+      "summary": "管理员可管理机构、教师、学生与归属关系，是教师每日记录的前置底座；现有 P1/P2 成果仍需收敛为可复现模块基线并完成最小人工确认。",
+      "updated_at": "2026-08-11T00:00:00+08:00",
+      "scope_in": [
+        {"id": "P1-min", "label": "P1 最小账号、会话、CSRF、机构隔离与权限投影"},
+        {"id": "P2-min", "label": "P2 最小学生资料、教师归属、转移和时钟保护"},
+        {"id": "P8-min", "label": "P8 HTTPS、健康、容量、审计和备份恢复最低门槛"}
+      ],
+      "scope_out": [
+        {"id": "P3", "label": "教师每日记录、提交、审核、退回、更正与历史"},
+        {"id": "P4", "label": "语音与文字 AI 增强能力"},
+        {"id": "P5-P7", "label": "图片批改、错题池、周报与 PDF"},
+        {"id": "P3-backfill-proxy", "label": "教师历史补录、管理员代录及其专属入口"}
+      ],
+      "contract_state": {
+        "status": "frozen",
+        "safe_summary": "P1/P2 字段级接口契约已作为模块已有能力，后续仅按受控候选组合复验。"
+      },
+      "candidate_version": {
+        "status": "not_fixed",
+        "safe_summary": "尚未提供 P1/P2、前端、迁移与启动说明一致的固定模块组合候选。"
+      },
+      "runtime_gate": {
+        "status": "not_assessed",
+        "safe_summary": "P8 最低运行清单、异机副本与一次恢复演练尚未形成试用证据。"
+      },
+      "evidence_links": [
+        {
+          "id": "PRD-CHANGE-20260811-002",
+          "label": "人工每日记录试用闭环 v0.1 产品方案",
+          "kind": "document",
+          "status": "confirmed",
+          "display_label": "D1 · 产品范围确认",
+          "source_role": "product",
+          "evidence_level": "D1",
+          "verified_at": "2026-08-11",
+          "document_path": "requirements/product/人工每日记录试用闭环-v0.1产品方案.md",
+          "checked_at": "2026-08-11",
+          "safe_summary": "已确认 v0.1 的范围、明确后置项及管理运营底座与人工闭环的关系。"
+        },
+        {
+          "id": "PILOT-V01-ACCEPTANCE",
+          "label": "人工每日记录试用闭环 v0.1 验收清单",
+          "kind": "document",
+          "status": "confirmed",
+          "display_label": "D1 · 产品验收门禁确认",
+          "source_role": "product",
+          "evidence_level": "D1",
+          "verified_at": "2026-08-11",
+          "document_path": "requirements/product/人工每日记录试用闭环-v0.1验收清单.md",
+          "checked_at": "2026-08-11",
+          "safe_summary": "已确认 v0.1 的准入、端到端和准出门禁；未记录任何门禁已通过。"
+        }
+      ],
+      "open_blockers": [
+        {
+          "id": "MVP-A-GATE-001",
+          "title": "MVP-A 可复现基线与最小人工确认",
+          "status": "open",
+          "next_action": "固定可复现候选并完成 P1 三角色最小人工确认和 P2 首日录入数据准备。",
+          "updated_at": "2026-08-11",
+          "evidence_refs": ["PILOT-V01-ACCEPTANCE"]
+        },
+        {
+          "id": "MVP-A-GATE-002",
+          "title": "MVP-A 组合候选固定",
+          "status": "open",
+          "next_action": "提供 P1/P2 服务端、前端、迁移与启动说明一致的可复现组合候选。",
+          "updated_at": "2026-08-11",
+          "evidence_refs": ["PILOT-V01-ACCEPTANCE"]
+        },
+        {
+          "id": "MVP-A-GATE-003",
+          "title": "MVP-A 独立验证准备",
+          "status": "open",
+          "next_action": "准备可重置夹具、遗留 UI 验收、缺陷跟踪和模块组合回归。",
+          "updated_at": "2026-08-11",
+          "evidence_refs": ["PILOT-V01-ACCEPTANCE"]
+        },
+        {
+          "id": "MVP-A-GATE-004",
+          "title": "P8 最低运行清单",
+          "status": "open",
+          "next_action": "补齐 HTTPS、健康/时钟、容量、审计、备份、异机副本和恢复演练计划证据。",
+          "updated_at": "2026-08-11",
+          "evidence_refs": ["PILOT-V01-ACCEPTANCE"]
+        },
+        {
+          "id": "MVP-A-GATE-005",
+          "title": "MVP-A 独立验证准备",
+          "status": "open",
+          "next_action": "准备可重置夹具、遗留 UI 验收、缺陷跟踪和模块组合回归。",
+          "updated_at": "2026-08-11",
+          "evidence_refs": ["PILOT-V01-ACCEPTANCE"]
+        }
+      ]
+    },
+    {
+      "id": "mvp-b-daily-record-closure",
+      "delivery_track": "teacher_daily_record_closure",
+      "name": "MVP-B · 教师每日学情闭环",
+      "display_label": "D1 · 模块范围已确认",
+      "source_role": "product",
+      "evidence_level": "D1",
+      "verified_at": "2026-08-11",
+      "delivery_status": "contract_freeze",
+      "summary": "教师完成当天文字记录、保存提交，管理员通过共享审核台审核、退回和追踪；先交付人工版，AI 能力在闭环稳定后再增加。",
+      "updated_at": "2026-08-11T00:00:00+08:00",
+      "scope_in": [
+        {"id": "P3-manual", "label": "教师键盘记录、模板、保存、提交、更正与历史"},
+        {"id": "P3-review", "label": "管理员共享审核台、通过、退回与记录追踪"},
+        {"id": "P8-min", "label": "最低健康、安全、审计和备份恢复门槛"}
+      ],
+      "scope_out": [
+        {"id": "P4", "label": "语音、转写、AI 候选文本和人工确认"},
+        {"id": "P5-P7", "label": "图片批改、错题池、周报与 PDF"},
+        {"id": "P3-backfill-proxy", "label": "教师历史补录、管理员代录及其专属入口"}
+      ],
+      "contract_state": {"status": "not_frozen", "safe_summary": "P3 人工闭环字段级接口契约、OpenAPI、错误映射和守卫证据尚未冻结。"},
+      "candidate_version": {"status": "not_fixed", "safe_summary": "尚未提供同时包含 P3 服务端、前端、迁移与启动说明的固定组合候选。"},
+      "runtime_gate": {"status": "not_assessed", "safe_summary": "P8 最低运行清单、异机副本与一次恢复演练尚未形成试用证据。"},
+      "evidence_links": [
+        {"id": "PRD-CHANGE-20260811-002", "label": "人工每日记录试用闭环 v0.1 产品方案", "kind": "document", "status": "confirmed", "display_label": "D1 · 产品范围确认", "source_role": "product", "evidence_level": "D1", "verified_at": "2026-08-11", "document_path": "requirements/product/人工每日记录试用闭环-v0.1产品方案.md", "checked_at": "2026-08-11", "safe_summary": "已确认人工记录优先、审核闭环和 AI 能力后置的产品边界。"},
+        {"id": "PILOT-V01-ACCEPTANCE", "label": "人工每日记录试用闭环 v0.1 验收清单", "kind": "document", "status": "confirmed", "display_label": "D1 · 产品验收门禁确认", "source_role": "product", "evidence_level": "D1", "verified_at": "2026-08-11", "document_path": "requirements/product/人工每日记录试用闭环-v0.1验收清单.md", "checked_at": "2026-08-11", "safe_summary": "已确认人工闭环的准入、端到端和准出门禁；未记录任何门禁已通过。"}
+      ],
+      "open_blockers": [
+        {"id": "MVP-B-GATE-001", "title": "P3 人工闭环契约冻结", "status": "open", "next_action": "完成 TR-P3、逐路由字段契约、OpenAPI、错误映射、守卫与可重置夹具。", "updated_at": "2026-08-11", "evidence_refs": ["PILOT-V01-ACCEPTANCE"]},
+        {"id": "MVP-B-GATE-002", "title": "P3 服务端与前端组合候选固定", "status": "open", "next_action": "提供同一组合的服务端提交、前端版本、启动方式、浏览器入口和迁移证据。", "updated_at": "2026-08-11", "evidence_refs": ["PILOT-V01-ACCEPTANCE"]},
+        {"id": "MVP-B-GATE-003", "title": "共享审核台独立验证", "status": "open", "next_action": "准备审核、退回、更正、权限隔离和异常反馈的独立测试与人工验收。", "updated_at": "2026-08-11", "evidence_refs": ["PILOT-V01-ACCEPTANCE"]},
+        {"id": "MVP-B-GATE-004", "title": "P8 最低运行清单", "status": "open", "next_action": "补齐 HTTPS、健康/时钟、容量、审计、备份、异机副本和恢复演练计划证据。", "updated_at": "2026-08-11", "evidence_refs": ["PILOT-V01-ACCEPTANCE"]}
+      ]
+    }
+  ],
+  "roles": {
+    "product": {
+      "name": "产品负责人",
+      "delivery_line_refs": ["mvp-a-management-foundation", "mvp-b-daily-record-closure"],
+      "status": "waiting",
+      "current": "PRD-CHANGE-20260811-002已确认，人工每日记录试用闭环v0.1成为首个受控试用交付线；前端优先改造项目监控面板，服务端提供安全数据契约，测试准备独立验收。",
+      "completed": "已建立PRD-BASELINE-20260811-001、v0.1产品方案与验收清单，并同步产品路线图、P3批量提交/结果过期语义、P8最低运行门槛、错误码、覆盖矩阵、索引及HO-PD-009。",
+      "next": "等待前端完成监控面板逐页改造候选，服务端完成安全数据投影与字段契约，测试执行独立看板验收；看板闭环后恢复P3的TR、字段级契约和编码包推进。",
+      "waiting_for": "等待前端监控面板候选、服务端dashboard-safe数据契约及测试独立验收；v0.1仍未进入P3实现、独立测试或可试用阶段。",
+      "owned_paths": ["docs/requirements/", "docs/internal/handoffs/product-to-development.md"],
+      "last_updated": "2026-08-11 23:21"
+    },
+    "development": {
+      "name": "服务端技术负责人",
+      "delivery_line_refs": ["mvp-a-management-foundation", "mvp-b-daily-record-closure"],
+      "status": "in_progress",
+      "current": "MVP-A 已按固定 P1/P2 组合候选进入模块收口：服务端负责运行底座准备与缺陷修复待命，前端负责最小人工确认页面回归；P3 业务编码仍暂停。",
+      "completed": "确认 STUDENT_ASSIGNMENT_INTEGRITY_ERROR 与SERVER_TIME_UNHEALTHY的产品/技术一致性；TR-004 F-01—F-06二轮复验通过；BUG-P0-002已由测试独立复测关闭；TR-006 MVP技术实施总览、TR-P2最终静态复验、P2字段级契约和P2编码包已完成。",
+      "next": "以 MVP-A 联调实施约定收口 P1/P2 组合基线，准备 P8-min 技术输入；真实缺陷再建立独立修复提交。",
+      "waiting_for": "等待 MVP-A 最小人工确认与 P8-min 门槛范围的后续输入；在此之前不恢复 P3/P4 业务编码。",
+      "owned_paths": ["app/application/", "app/domain/", "app/infrastructure/", "app/routers/", "docs/internal/technical-reviews/", "docs/internal/interface-contracts/", "docs/internal/handoffs/development-to-testing.md"],
+      "document_workspace": [
+        {
+          "key": "required_inputs",
+          "label": "编码前必读",
+          "description": "产品范围和共同准出依据；只读引用，不在服务端工作区复制正文。",
+          "paths": ["requirements/product/MVP-产品方案-v1.md", "requirements/product/产品迭代路线图-v1.md", "requirements/product/MVP-v1.0端到端验收清单-v1.md", "requirements/stages/P2-学生资料与教师归属需求.md"]
+        },
+        {
+          "key": "owned_outputs",
+          "label": "服务端负责维护",
+          "description": "技术结论、字段级契约与编码交付输入。",
+          "paths": ["internal/technical-reviews/TR-006-MVP-v1.0技术实施总览-v1.md", "internal/technical-reviews/TR-P2-学生资料与教师归属技术评审-v1.md", "internal/interface-contracts/P2-学生与教师归属接口契约-v1.md", "internal/handoffs/development-to-testing.md"]
+        },
+        {
+          "key": "verification_references",
+          "label": "验收与运行依据",
+          "description": "独立测试结论、公共门禁和部署恢复入口。",
+          "paths": ["internal/technical-reviews/TR-004-P0P1冻结基线差异复验与P2准入-v2.md", "internal/technical-reviews/TR-005-技术覆盖与分阶段门禁矩阵-v1.md", "internal/operations/TR-004-部署恢复与演练手册-v1.md", "internal/handoffs/testing-to-development.md"]
+        }
+      ],
+      "last_updated": "2026-08-12 01:10"
+    },
+    "testing": {
+      "name": "测试负责人",
+      "delivery_line_refs": ["mvp-a-management-foundation", "mvp-b-daily-record-closure"],
+      "status": "in_progress",
+      "current": "HO-DT-002 P0差异探针与 BUG-P0-002 修复复测已完成；修复分支全量 pytest 90/90通过，当前转入 P1 UI 与人工验收准备。",
+      "completed": "P0 旧基线和 HO-DT-002 公共能力探针均已独立执行；BUG-P0-002 已由测试独立复测关闭；测试中心已具备 Case、报告、缺陷和复测追踪入口；HO-DT-003 接口首轮报告已生成。",
+      "next": "继续执行 P1 UI 测试并安排负责人完成三角色工作台人工验收。",
+      "waiting_for": "等待负责人安排 P1 UI 与三角色人工验收；当前没有待服务端修复的 P0 产品缺陷。",
+      "owned_paths": ["docs/testing/", "docs/requirements/测试评审建议/", "docs/internal/handoffs/testing-to-development.md"],
+      "last_updated": "2026-08-09 21:50"
+    }
+  },
+  "workspaces": {
+    "frontend": {
+      "name": "前端开发负责人",
+      "delivery_line_refs": ["mvp-a-management-foundation", "mvp-b-daily-record-closure"],
+      "status": "in_progress",
+      "current": "P1 前端浏览器证据与统一版本看板已按固定提交 1c950ce 交测试；产品版本路线已在总览展示，MVP 尚未发布，P0—P8 仍为研发追踪；等待 UI 与三角色人工验收，P2 业务页面保持不开发。",
+      "completed": "已确认前端职责边界、P0/P1 冻结基线与 P2 当前准入状态；已完成前端入口、质量中心迁入工作区、二级导航、开关门禁和桌面/窄屏验证；已验证 P1 创建、停用、恢复、解锁、重置、机构更新、Logo、权限开关的请求字段；已完成统一交付版本展示、产品版本路线与交测试材料。",
+      "next": "配合测试角色完成 HO-DT-003 的 P1 UI 与三角色人工验收；继续准备 P2 页面联调。",
+      "waiting_for": "等待测试角色完成 P1 UI 与三角色人工验收；同时等待 P2 字段级接口契约冻结后，才开始 P2 业务页面实现与联调。",
+      "owned_paths": [
+        "app/templates/",
+        "app/static/",
+        "e2e/tests/",
+        "tests/integration/test_project_status.py",
+        "docs/internal/workspaces/frontend.md"
+      ],
+      "integration_status": "ready_for_workspace_validation",
+      "recovery_prompt": "当前任务始终以“前端开发负责人”角度工作：先读取冻结 PRD 和接口契约，再实现页面与浏览器验证；不改变服务端业务含义；联调问题必须回传服务端技术负责人闭环。",
+      "last_updated": "2026-08-09 22:30"
+    }
+  },
+  "handoffs": [
+    {
+      "id": "HO-PD-001",
+      "source": "product",
+      "target": "development",
+      "title": "第一阶段优化 PRD",
+      "status": "in_progress",
+      "summary": "产品已完成评审建议回写；开发主体复核通过，仍有少量规则和引用需要收口。",
+      "document_path": "internal/handoffs/product-to-development.md",
+      "updated_at": "2026-08-03 22:41"
+    },
+    {
+      "id": "HO-DT-001",
+      "source": "development",
+      "target": "testing",
+      "title": "P0 项目与数据基线",
+      "status": "completed",
+      "summary": "P0 实现和开发侧验证已经交付，独立测试验收通过；新版差异复验作为后续事项。",
+      "document_path": "internal/handoffs/development-to-testing.md",
+      "updated_at": "2026-07-31 23:59"
+    },
+    {
+      "id": "HO-PD-003",
+      "source": "product",
+      "target": "development",
+      "title": "P2归属完整性错误码变更",
+      "status": "completed",
+      "summary": "PRD-CHANGE-20260808-001开发静态验收通过，P2-GATE-003关闭；实现、OpenAPI和运行证据仍随编码验收。",
+      "document_path": "internal/handoffs/product-to-development.md",
+      "updated_at": "2026-08-08 21:15"
+    },
+    {
+      "id": "HO-DT-002",
+      "source": "development",
+      "target": "testing",
+      "title": "TR-004 P0/P1冻结基线前置修复",
+      "status": "completed",
+      "summary": "P0 独立差异探针通过；BUG-P0-002 已在修复提交 4ea8afbc 的干净 worktree 中独立复测关闭。",
+      "document_path": "internal/handoffs/development-to-testing.md",
+      "updated_at": "2026-08-09 21:15"
+    },
+    {
+      "id": "HO-PD-004",
+      "source": "product",
+      "target": "development",
+      "title": "MVP 产品版本基线正式交付",
+      "status": "completed",
+      "summary": "SYNC-20260809-001 已确认 R0、MVP v1.0、v1.1—v1.3 范围；产品交开发已由服务端技术负责人接收并关闭。",
+      "document_path": "internal/handoffs/product-to-development.md",
+      "updated_at": "2026-08-09 22:35"
+    },
+    {
+      "id": "HO-DT-003",
+      "source": "development",
+      "target": "testing",
+      "title": "P1账号、权限与管理工作台提测包",
+      "status": "in_progress",
+      "summary": "固定提交 1c950ce 已交测试；接口守卫 96/96、P1 专项 57/57 通过，UI 与三角色人工验收待完成。",
+      "document_path": "internal/handoffs/development-to-testing.md",
+      "updated_at": "2026-08-09 20:15"
+    }
+  ],
+  "stages": [
+    {
+      "code": "P0",
+      "title": "项目基线",
+      "status": "in_progress",
+      "summary": "R0 共同工程底座；独立差异探针通过，测试基础设施修复待合入当前主线。",
+      "deliverables": ["旧基线已验收", "迁移与机构基础已建立", "TR-004冻结基线修复已通过独立复测", "BUG-P0-002修复待合入"],
+      "requirements_count": 34,
+      "updated_at": "2026-08-03 00:59",
+      "development": {
+        "status": "completed",
+        "progress_percent": 100,
+        "current": "TR-004 v2开发复验和 P0 独立差异探针已通过；BUG-P0-002 修复提交待合入当前主线。",
+        "completed": ["锁定历史代码保留、改造、替换和废弃项", "落地模块化单体边界与兼容入口", "实现空库、重复、旧数据和回滚迁移", "建立机构、公开标识、行版本和审计基础", "现有接口增加机构范围并完成回归", "建立P0验收证据", "完成迁移凭证、CSRF、可观测性和部署安全门禁"],
+        "next": ["合入 BUG-P0-002 测试基础设施修复", "P8上线前执行真实服务器后置演练"]
+      },
+      "testing": {"status": "passed", "total": 16, "executed": 16, "passed": 16, "failed": 0, "blockers": [], "note": "P0 独立差异探针 16/16 通过；BUG-P0-002 已在独立修复提交复测关闭，待合入当前主线。"},
+      "acceptance": ["空库和旧库都能安全升级到最新结构", "重复执行迁移不会重复数据或报错", "现有登录、学生隔离和进度页回归正常"],
+      "updates": [
+        {"date": "2026-07-31", "title": "P0验收完成", "detail": "负责人确认人工检查无问题；阻断项全部通过，待自动化与P8安全检查作为非阻塞后续事项保留。"},
+        {"date": "2026-07-31", "title": "P0进入待验收", "detail": "模块边界、迁移、机构隔离和审计基础已完成，20项快速检查与2条浏览器路径通过。"},
+        {"date": "2026-07-31", "title": "P0阶段二级页上线", "detail": "需求文档、开发进度、测试进度和验收条件已经集中展示。"},
+        {"date": "2026-07-31", "title": "P0需求规格完成", "detail": "形成26条带编号定义和8个验收场景。"},
+        {"date": "2026-07-31", "title": "主代码库确认", "detail": "D盘FastAPI项目成为唯一后续开发主线。"}
+      ]
+    },
+    {
+      "code": "P1",
+      "title": "账号与权限",
+      "status": "in_progress",
+      "summary": "建立机构、超管、普通管理员和教师的权限边界；接口验收已通过，等待独立 UI 与三角色人工验收。",
+      "deliverables": ["P1字段级契约已确认", "固定提交1c950ce接口验收通过", "前端浏览器证据已交付", "等待独立UI与人工验收"],
+      "requirements_count": 44,
+      "updated_at": "2026-08-03 00:59",
+      "development": {"status": "completed", "progress_percent": 100, "current": "固定提交 1c950ce 的接口守卫 96/96 与 P1 服务端专项 57/57 已由测试独立通过；前端已完成浏览器证据。", "completed": ["完成旧版三类账号、首次改密、机构隔离和工作台", "形成并确认P1字段级接口契约", "完成冻结基线差异清单", "完成F-02—F-06实现、OpenAPI和自动化证据"], "next": ["测试角色独立执行 P1 UI 测试", "负责人完成三角色人工验收", "P2 文档冻结后复用公共认证与审计能力"]},
+      "testing": {"status": "in_progress", "total": 57, "executed": 57, "passed": 57, "failed": 0, "blockers": [], "note": "接口阶段已独立通过；UI 测试和三角色人工验收尚未完成，不得标记 P1 准出。"},
+      "acceptance": ["三类角色登录后进入正确工作区", "普通管理员和教师越权操作被服务端拒绝", "账号与权限变更保留审计记录"],
+      "updates": [{"date": "2026-07-31", "title": "P1进入待验收", "detail": "账号安全、三类角色、机构资料、权限开关和工作台完成；21条自动化Case通过。"}, {"date": "2026-07-31", "title": "P1测试方案与Case已准备", "detail": "覆盖账号、登录会话、角色边界、机构隔离、审计、UI和人工验收。"}, {"date": "2026-07-31", "title": "P1开发启动", "detail": "P0验收通过后正式进入账号、角色权限和机构配置实现。"}, {"date": "2026-07-31", "title": "P1需求规格完成", "detail": "角色、登录、机构信息和权限边界已编号。"}]
+    },
+    {
+      "code": "P2",
+      "title": "学生与归属",
+      "status": "in_progress",
+      "summary": "管理学生资料、重名、教师分配、转移和停用。服务端已独立测试准出，前后端联调已通过，现进入独立 UI 测试。",
+      "deliverables": ["手动创建", "重名提示", "教师转移", "历史保留"],
+      "requirements_count": 43,
+      "updated_at": "2026-08-10 00:15",
+      "development": {"status": "completed", "progress_percent": 100, "current": "服务端候选b471547已完成独立测试准出；前后端组合候选ad706a9已通过开发联调验收。", "completed": ["完成P2专项技术方案和字段级接口契约冻结", "完成归属完整性错误码开发静态验收", "完成服务器时间健康错误码产品语义收口", "完成测试可测性确认和P2编码包", "完成R1/R2整改：迁移映射、同名互斥、停用转移、422映射、幂等长度、全量回归、P2守卫、OpenAPI和并发事务证据", "完成BUG-P2-001修复：四个状态写接口缺失Idempotency-Key的统一错误包及回归探针", "补齐BUG-P0-002与BUG-P2-002遗漏的自包含测试运行fixture", "完成P2服务端独立测试准出", "完成P2前后端联调复验：编辑全字段、筛选、同名两种处理、归属历史、角色投影与P1回归均通过"], "next": ["测试角色在固定组合候选ad706a9执行独立UI验收", "独立UI验收通过后组织产品验收并收口P2"]},
+      "testing": {"status": "in_progress", "total": 64, "executed": 64, "passed": 64, "failed": 0, "blockers": [], "note": "P2服务端接口已在固定提交b471547独立准出：P2聚焦64/64、严格守卫64/64、全量pytest158/158；前后端组合候选ad706a9已通过开发联调，等待测试角色独立UI验收。"},
+      "acceptance": ["同名学生不会自动合并或串档", "转移前后教师可见范围符合规则", "停用和恢复不丢失历史"],
+      "updates": [{"date": "2026-08-10", "title": "P2前端首轮联调退回整改", "detail": "真实主流程浏览器联调通过，但编辑字段范围不完整、姓名或学校筛选实际为AND、同名候选学校字段错用且关键路径缺浏览器证据；全量回归另有2条旧文案断言待同步。"}, {"date": "2026-08-10", "title": "P2服务端独立测试准出", "detail": "固定提交b471547在全新环境完成全量pytest158/158、P2聚焦64/64和严格契约守卫64/64；BUG-P2-001、BUG-P2-002均关闭。前端/UI另行提测。"}, {"date": "2026-08-10", "title": "P2最终候选再次待测试复核", "detail": "候选b471547已关闭BUG-P2-001，并将BUG-P2-002所涉项目状态报告详情改为自包含fixture。"}, {"date": "2026-08-10", "title": "P2最终候选待测试复核", "detail": "候选70716a9已关闭BUG-P2-001并补齐遗漏的BUG-P0-002自包含测试fixture。"}, {"date": "2026-08-09", "title": "P2 R2开发验收通过", "detail": "候选4d11068关闭全量回归、P2守卫、OpenAPI必填Header和BEGIN IMMEDIATE并发阻断；下一步为测试独立验证。"}, {"date": "2026-08-09", "title": "P2 R1整改复验未通过", "detail": "固定提交60a350e已修复首轮核心数据语义，但全量回归3项失败、P2守卫资产缺失、OpenAPI Header非必填、归属事务缺BEGIN IMMEDIATE；已在R2关闭。"}, {"date": "2026-08-09", "title": "P2首轮实施验收退回", "detail": "迁移哈希漂移、提交不可复现、OpenAPI与负向语义不符合冻结契约；已按R1/R2闭环。"}, {"date": "2026-07-31", "title": "P2需求规格完成", "detail": "学生字段、重名、转移、停用和权限规则已编号。"}]
+    },
+    {
+      "code": "P3",
+      "title": "每日记录与审核",
+      "status": "pending",
+      "summary": "先用键盘打通教师记录到管理员审核的核心闭环。",
+      "deliverables": ["自动草稿", "部分提交", "缺交名单", "审核与更正"],
+      "requirements_count": 50,
+      "updated_at": "2026-08-03 00:59",
+      "development": {"status": "pending", "progress_percent": 0, "current": "等待P2完成", "completed": [], "next": ["实现教师每日工作台", "实现记录状态和自动草稿", "实现审核、退回和更正版本"]},
+      "testing": {"status": "not_started", "total": 0, "executed": 0, "passed": 0, "failed": 0, "blockers": [], "note": "需求规格已准备，尚未录入测试用例。"},
+      "acceptance": ["教师可部分提交并看到具体未交学生", "管理员可逐条退回和批量通过", "锁定后更正保留完整历史版本"],
+      "updates": [{"date": "2026-07-31", "title": "P3需求规格完成", "detail": "每日记录状态、提交、审核和更正闭环已编号。"}]
+    },
+    {
+      "code": "P4",
+      "title": "语音与文字 AI",
+      "status": "pending",
+      "summary": "用云端语音和文字整理减少教师输入时间。",
+      "deliverables": ["语音转文字", "摘要候选", "教师确认", "人工降级"],
+      "requirements_count": 44,
+      "updated_at": "2026-08-03 00:59",
+      "development": {"status": "pending", "progress_percent": 0, "current": "等待P3完成", "completed": [], "next": ["接入统一AI任务边界", "实现云端语音转写", "实现教师确认和人工降级"]},
+      "testing": {"status": "not_started", "total": 0, "executed": 0, "passed": 0, "failed": 0, "blockers": [], "note": "需求规格已准备，云端供应商和模型尚待锁定。"},
+      "acceptance": ["教师确认转写后删除原始语音", "AI非法结果不能进入正式记录", "AI失败时键盘记录继续可用"],
+      "updates": [{"date": "2026-07-31", "title": "P4需求规格完成", "detail": "AI任务、语音生命周期、摘要和失败降级已编号。"}]
+    },
+    {
+      "code": "P5",
+      "title": "数学图片批改",
+      "status": "pending",
+      "summary": "识别整页作业并集中展示错题和不确定题。",
+      "deliverables": ["多图上传", "AI批改", "教师修正", "图片自动删除"],
+      "requirements_count": 47,
+      "updated_at": "2026-08-03 00:59",
+      "development": {"status": "pending", "progress_percent": 0, "current": "等待P4完成", "completed": [], "next": ["实现临时图片上传", "实现整页数学批改", "实现教师复核和图片删除"]},
+      "testing": {"status": "not_started", "total": 0, "executed": 0, "passed": 0, "failed": 0, "blockers": [], "note": "需求规格已准备，图片数量和大小上限等待样本评估。"},
+      "acceptance": ["错题和不确定题优先展示", "教师可完整修正AI结果", "确认后删图、失败图片最多保留7天"],
+      "updates": [{"date": "2026-07-31", "title": "P5需求规格完成", "detail": "整页批改、教师修正、临时文件和50页评估已编号。"}]
+    },
+    {
+      "code": "P6",
+      "title": "学生错题池",
+      "status": "pending",
+      "summary": "长期保存文字化错题、解法和修改历史。",
+      "deliverables": ["记录时间线", "文字错题", "版本历史", "教师交接"],
+      "requirements_count": 42,
+      "updated_at": "2026-08-03 00:59",
+      "development": {"status": "pending", "progress_percent": 0, "current": "等待P5完成", "completed": [], "next": ["实现学习记录时间线", "实现文字错题与版本", "实现转移后的历史权限"]},
+      "testing": {"status": "not_started", "total": 0, "executed": 0, "passed": 0, "failed": 0, "blockers": [], "note": "需求规格已准备，尚未录入测试用例。"},
+      "acceptance": ["只有教师确认错题进入长期池", "原图删除后文字错题仍完整", "修改和移除均保留历史"],
+      "updates": [{"date": "2026-07-31", "title": "P6需求规格完成", "detail": "记录库、文字错题、版本和教师交接已编号。"}]
+    },
+    {
+      "code": "P7",
+      "title": "周报与 PDF",
+      "status": "pending",
+      "summary": "生成周报、同类练习并完成正式审核下载。",
+      "deliverables": ["周报草稿", "同类练习", "管理员审核", "正式PDF"],
+      "requirements_count": 83,
+      "updated_at": "2026-08-03 00:59",
+      "development": {"status": "pending", "progress_percent": 0, "current": "等待P6完成", "completed": [], "next": ["实现周五后生成规则", "实现AI总结和同类题", "实现审核、锁定和正式PDF"]},
+      "testing": {"status": "not_started", "total": 0, "executed": 0, "passed": 0, "failed": 0, "blockers": [], "note": "需求规格已准备，尚未录入测试用例。"},
+      "acceptance": ["记录不遗漏、不重复进入正式周报", "草稿和正式PDF状态清晰", "更正版本保留旧PDF并标记作废"],
+      "updates": [{"date": "2026-07-31", "title": "P7需求规格完成", "detail": "生成时间、内容、AI练习、审核和PDF版本已编号。"}]
+    },
+    {
+      "code": "P8",
+      "title": "运行保障与试用",
+      "status": "in_progress",
+      "summary": "运行保障随 MVP v1.0 起持续建设；v1.3 再完成真实机构综合试用与现场演练。",
+      "deliverables": ["开机运行", "备份恢复", "80%提醒", "5教师试用"],
+      "requirements_count": 82,
+      "updated_at": "2026-08-03 00:59",
+      "development": {"status": "in_progress", "progress_percent": 0, "current": "健康、安全、网络降级、容量保护、备份恢复、AI运行状态和观测随 v1.0—v1.2 持续准出；v1.3 集中验收真实机构综合试用。", "completed": [], "next": ["在 MVP 阶段核对当前版本所需运行门禁", "随版本补齐容量、备份恢复和AI运行证据", "v1.3 完成50页和5教师真实试用"]},
+      "testing": {"status": "not_started", "total": 0, "executed": 0, "passed": 0, "failed": 0, "blockers": [], "note": "需求规格已准备，运行环境和真实样本尚未进入验收。"},
+      "acceptance": ["重启后局域网系统自动恢复", "备份可恢复核心业务关联", "形成10分钟录入、2分钟批改和AI成本实测结论"],
+      "updates": [{"date": "2026-07-31", "title": "P8需求规格完成", "detail": "本地部署、降级、存储、备份、AI可见性和试用指标已编号。"}]
+    }
+  ],
+  "technical_reviews": {
+    "overall_status": "in_implementation",
+    "summary": "公共技术前置、P2最终静态复验、服务器时间健康产品语义和测试可测性确认均已完成；P2字段级契约与编码包已冻结，服务端候选b471547已独立测试准出，前后端组合ad706a9已通过开发联调。",
+    "next_checkpoint": "等待测试角色对固定组合候选ad706a9执行独立UI验收；通过后进入产品验收。",
+    "workflow": [
+      {"code": "01", "title": "PRD评审完成", "detail": "锁定版本、范围、角色、流程和验收标准。"},
+      {"code": "02", "title": "总体技术复审", "detail": "判断现有框架保持、补强、修改或暂缓的部分。"},
+      {"code": "03", "title": "阶段技术评审", "detail": "开发前确认页面、数据、接口、权限、异常和测试入口。"},
+      {"code": "04", "title": "开发与验证", "detail": "实现和测试引用同一批需求编号与已确认技术结论。"}
+    ],
+    "reviews": [
+      {"code": "REF-001", "title": "安卓架构方法对Web项目的启示", "scope": "参考输入", "status": "assessed", "document_path": "references/architecture/安卓架构方法对当前Web项目的启示-v1.md", "next": "作为TR-000的参考输入，不直接约束开发。"},
+      {"code": "TR-000", "title": "总体技术架构复审", "scope": "P2—P8公共架构", "status": "approved", "document_path": "internal/technical-reviews/TR-000-总体技术架构复审-v1.md", "next": "作为后续阶段公共架构基线。"},
+      {"code": "TR-001", "title": "AI Gateway与任务生命周期", "scope": "P4/P5/P7 AI公共能力", "status": "approved", "document_path": "internal/technical-reviews/TR-001-AI-Gateway与任务生命周期技术方案-v1.md", "next": "P4/P5/P7阶段方案引用。"},
+      {"code": "TR-002", "title": "归属判定与周报来源并发", "scope": "P2/P3/P7并发数据", "status": "approved", "document_path": "internal/technical-reviews/TR-002-归属判定与周报来源并发时序-v1.md", "next": "P2/P3/P7阶段方案引用。"},
+      {"code": "TR-003", "title": "技术方案完整性验收", "scope": "A—E目标与独立复验", "status": "approved", "document_path": "internal/technical-reviews/TR-003-技术方案完整性验收记录-v1.md", "next": "作为阶段开发门禁依据。"},
+      {"code": "TR-004", "title": "P0/P1冻结基线差异复验与P2准入", "scope": "P0/P1→P2", "status": "approved", "document_path": "internal/technical-reviews/TR-004-P0P1冻结基线差异复验与P2准入-v2.md", "next": "公共前置已通过；完成TR-P2最终复验和P2字段级契约冻结。"},
+      {"code": "TR-005", "title": "技术覆盖与分阶段门禁矩阵", "scope": "P2—P8推进规则", "status": "approved", "document_path": "internal/technical-reviews/TR-005-技术覆盖与分阶段门禁矩阵-v1.md", "next": "各阶段技术评审引用对应门禁。"},
+      {"code": "TR-006", "title": "MVP v1.0技术实施总览", "scope": "MVP v1.0技术推进图", "status": "draft", "document_path": "internal/technical-reviews/TR-006-MVP-v1.0技术实施总览-v1.md", "next": "作为R0收口、TR-P2最终复验和P2编码包的共同输入，不改变产品范围。"},
+      {"code": "TR-P2", "title": "学生资料与教师归属技术评审", "scope": "P2", "status": "approved", "document_path": "internal/technical-reviews/TR-P2-学生资料与教师归属技术评审-v1.md", "next": "P2字段级契约与编码包已冻结；服务端候选b471547已独立测试准出，前后端组合ad706a9已通过开发联调，等待独立UI验收。"},
+      {"code": "TR-P3", "title": "每日记录与审核技术评审", "scope": "P3", "status": "pending", "document_path": null, "next": "P3开发前创建。"},
+      {"code": "TR-P4", "title": "语音与文字AI技术评审", "scope": "P4", "status": "pending", "document_path": null, "next": "P4开发前创建。"},
+      {"code": "TR-P5", "title": "数学图片批改技术评审", "scope": "P5", "status": "pending", "document_path": null, "next": "P5开发前创建。"},
+      {"code": "TR-P6", "title": "学生错题池技术评审", "scope": "P6", "status": "pending", "document_path": null, "next": "P6开发前创建。"},
+      {"code": "TR-P7", "title": "周报与PDF技术评审", "scope": "P7", "status": "pending", "document_path": null, "next": "P7开发前创建。"},
+      {"code": "TR-P8", "title": "运行保障与试用技术评审", "scope": "P8", "status": "pending", "document_path": null, "next": "P8开发前创建。"}
+    ]
+  },
+  "current_work": {
+    "title": "MVP v1.0 技术总图与 P2 编码包",
+    "detail": "TR-006 MVP技术实施总览明确R0、P1—P4、P8运行门禁和三角色交接。P2服务端候选b471547已完成独立测试准出；前后端组合ad706a9已完成开发联调，等待测试角色独立UI验收。P1仍待独立UI与三角色人工验收。",
+    "next_checkpoint": "测试角色在固定组合候选ad706a9完成P2独立UI验收；通过后进行产品验收"
+  },
+  "completed_capabilities": [
+    "D盘 FastAPI 项目已确定为唯一主代码库，历史目录只作参考",
+    "P0—P8冻结需求、覆盖矩阵、错误码和接口管理规范已经建立",
+    "本地试用、云端AI API和后续多机构SaaS的演进方向已经确认",
+    "AI与确定性代码职责边界、人工降级和费用控制原则已经确认",
+    "项目总览、阶段页、文档中心、技术评审、测试和缺陷入口已经上线",
+    "产品、开发、测试三角色档案和正式交接机制已经建立",
+    "P0/P1旧实现相关32项开发回归通过，冻结基线差异修复已形成可追溯证据",
+    "TR-000—TR-003公共技术基线和TR-005阶段门禁矩阵已经确认",
+    "TR-P2专项方案及P2字段级接口候选已经完成",
+    "P2归属完整性错误码变更已通过开发静态验收",
+    "TR-004 v2开发复验通过，解除P2公共技术前置阻断",
+    "SYNC-20260809-001 已确认 R0、MVP v1.0、v1.1、v1.2、v1.3 产品路线图；MVP v1.0 尚未发布或准出"
+  ],
+  "attention_items": [
+    {"title": "R0修复待合入当前主线", "detail": "BUG-P0-002 已在 4ea8afbc 的干净 worktree 独立复测关闭；合入 recovery/2026-08-09 后才构成当前主线可复现基线。"},
+    {"title": "P1仍待UI与人工验收", "detail": "接口阶段已独立通过，但 P1 UI 测试和负责人三角色人工工作台验收尚未完成，不得标记为 R0 或 MVP 准出。"},
+    {"title": "P2等待独立UI验收", "detail": "P2服务端已独立准出，固定组合候选ad706a9已完成开发联调；测试角色仍需在干净环境执行独立UI验收。P3/P4不得提前编码。"},
+    {"title": "P8运行门禁随版本持续准出", "detail": "健康、安全、容量、备份恢复和运行观测从 MVP v1.0 起随版本建设；真实机构综合试用与现场演练在 v1.3 完成。"}
+  ],
+  "acceptance": {
+    "note": "MVP v1.0 尚未发布或准出。P2已完成服务端独立准出与开发联调，当前等待独立UI验收和后续产品验收；P1仍待独立UI与三角色人工验收。",
+    "steps": [
+      {"action": "完成 P2 独立 UI 验收", "expected": "测试角色在固定组合候选ad706a9的干净环境验证三角色权限、学生主流程、错误反馈、写入契约和窄屏展示。"},
+      {"action": "完成 P2 产品验收", "expected": "产品负责人依据冻结P2需求与独立测试证据确认闭环，不将P2误标为MVP发布。"},
+      {"action": "完成 P1 UI 与人工验收", "expected": "三类账号工作台由测试与负责人独立验收并留存证据。"}
+    ]
+  },
+  "recent_updates": [
+    {"date": "2026-08-09", "title": "MVP 产品版本路线图已确认", "detail": "R0为工程与账号准备；MVP v1.0覆盖 P1—P4 的每日学情 AI 录入与管理员审核闭环；v1.1、v1.2、v1.3 分别进入图片错题、学习资产周报和机构综合试用。MVP尚未发布或准出。"},
+    {"date": "2026-08-09", "title": "P0 独立复验收口", "detail": "P0 独立差异探针 16/16 通过；BUG-P0-002 在修复提交 4ea8afbc 的干净 worktree 全量 pytest 90/90 中独立复测关闭，待合入当前主线。"},
+    {"date": "2026-08-09", "title": "P1 接口阶段独立通过", "detail": "固定提交 1c950ce 的严格契约守卫 96/96、P1 服务端专项 57/57 和迁移 v001—v008 无漂移已由测试确认；剩余 UI 与三角色人工验收。"},
+    {"date": "2026-08-09", "title": "TR-004二轮开发复验通过", "detail": "F-01—F-06已完成；全量88项自动化、30项专项探针及4条浏览器路径通过，迁移v001—v008无哈希漂移，P2公共技术前置阻断解除。"},
+    {"date": "2026-08-08", "title": "项目看板窄屏兼容样式优化", "detail": "缩短总览主标题，补强1050px以下导航布局、600px以下标题断行/字号/边距和380px小屏展示，避免长技术标识撑破卡片。"},
+    {"date": "2026-08-08", "title": "项目总览按冻结基线重新收口", "detail": "P0/P1改为有阻塞，完成度调整为25%；清除已关闭和过期提醒，验收入口切换为TR-004交付复验，并精简成果与更新历史。"},
+    {"date": "2026-08-08", "title": "P2归属完整性错误码开发验收通过", "detail": "确认STUDENT_ASSIGNMENT_INTEGRITY_ERROR（HTTP 409）与P2/P3、覆盖矩阵、索引和交接一致；同步P2技术方案及字段级契约并关闭P2-GATE-003。"},
+    {"date": "2026-08-08", "title": "TR-004首次复验和P2编码文档包完成", "detail": "确认P0/P1旧回归32项通过但冻结基线仍有六组阻断；输出F-01—F-06修复包、TR-P2专项方案和P2字段级接口候选，业务代码由其他AI实施。"},
+    {"date": "2026-08-08", "title": "技术方案对比共识已回写", "detail": "补强AI输入最小化与脱敏、单attempt单次调用、临时文件四状态、周报批量结果查询和来源消费行数断言；新增TR-004 P0/P1差异复验及TR-005分阶段门禁。"},
+    {"date": "2026-08-08", "title": "总体技术方案完成独立复验", "detail": "完成TR-000—TR-003、AI Gateway、精确归属与周报来源并发方案及P2—P8接口契约骨架；架构、并发数据、接口契约三方向多轮复验通过。"},
+    {"date": "2026-08-03", "title": "三角色协作体系上线", "detail": "产品、开发、测试三个任务已建立长期角色档案、职责边界、正式交接记录和协作中心；58项项目检查通过。"},
+    {"date": "2026-08-03", "title": "开发与测试复验缺口完成二次回写", "detail": "关闭同日教师转移归属、周报提交版本、15,728,640字节/300,000毫秒精确边界和跨文档引用缺口，并新增可直接联调验收的P1具体接口契约。"},
+    {"date": "2026-08-03", "title": "开发与测试评审建议完成PRD回写", "detail": "采纳开发12项推荐和测试14项建议；补齐CSRF、补录、语音边界、周报approved/来源占用、错题上限，并新增错误码、参数、接口契约、性能和测试准出规范。"},
+    {"date": "2026-08-03", "title": "第一阶段PRD冻结基线形成", "detail": "G1/G2、P0—P8、索引和覆盖矩阵完成复审，形成产品、开发和测试共同引用的正式基线。"}
+  ]
+}

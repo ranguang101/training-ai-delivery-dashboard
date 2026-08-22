@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light">
+    <title>项目进度 · 安全降级</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='/project-status.css') }}">
+  </head>
+  <body>
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">DELIVERY CONSOLE · 项目交付看板</p>
+        <h1>项目进度数据暂时不可用</h1>
+      </div>
+    </header>
+    <main>
+      <section class="section-block">
+        <div class="section-heading">
+          <div><h2>安全降级</h2></div>
+        </div>
+        <p role="alert" class="delivery-empty">
+          项目状态数据无法读取或未通过完整性校验，已安全降级；
+          当前不显示任何状态内容。请由项目负责人核对 project-status.json 后刷新页面。
+        </p>
+      </section>
+    </main>
+    <footer><span>本页面仅用于本地开发过程跟踪，正式生产环境默认关闭。</span></footer>
+  </body>
+</html>

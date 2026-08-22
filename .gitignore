@@ -1,0 +1,16 @@
+.venv/
+node_modules/
+*.egg-info/
+__pycache__/
+.pytest_cache/
+.env
+data/dev/
+data/test/
+data/backups/
+test-results/
+playwright-report/
+.test-worktrees/
+reports/test-runs/*/
+!reports/test-runs/.gitkeep
+
+data/_evidence/
