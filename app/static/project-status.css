@@ -170,6 +170,63 @@ main { padding: 42px 0 70px; }
 
 .section-block { margin-top: 28px; padding: 30px; border-radius: 24px; }
 .delivery-lines { scroll-margin-top: 20px; border-color: #bfd3c6; }
+.safe-workspace-hero {
+  display: grid;
+  min-height: 220px;
+  align-items: end;
+  padding: clamp(30px, 6vw, 68px);
+  color: #edf5ef;
+  background: #173d30;
+  border-radius: 28px;
+  box-shadow: var(--shadow);
+}
+.safe-workspace-hero > div { max-width: 720px; }
+.safe-workspace-hero h2 { margin: 0; font-size: clamp(34px, 5vw, 58px); letter-spacing: -0.03em; line-height: 1.06; }
+.safe-workspace-hero p { max-width: 62ch; margin: 17px 0 0; color: #c9dbcf; font-size: 15px; line-height: 1.75; }
+.safe-workspace-back { margin: 0 0 25px !important; }
+.safe-workspace-back a { color: #d8f0df; font-size: 13px; font-weight: 800; }
+.safe-workspace-section { border-color: #bfd3c6; }
+.safe-workspace-loading, .safe-workspace-empty, .safe-workspace-error, .safe-workspace-alert {
+  margin: 0;
+  padding: 18px;
+  color: var(--muted);
+  background: #f3f6f2;
+  border-radius: 14px;
+  line-height: 1.65;
+}
+.safe-workspace-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.safe-workspace-card { display: grid; align-content: start; gap: 16px; min-width: 0; padding: 24px; background: #fcfdfb; border: 1px solid #cfddd3; border-radius: 16px; }
+.safe-workspace-card-heading, .safe-workspace-detail-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; }
+.safe-workspace-card h3, .safe-workspace-detail-heading h3 { margin: 0; font-size: 23px; letter-spacing: -0.02em; overflow-wrap: anywhere; }
+.safe-workspace-status { flex: 0 0 auto; padding: 6px 9px; color: #8a5417; background: var(--amber-soft); border-radius: 99px; font-size: 11px; font-weight: 900; white-space: nowrap; }
+.safe-workspace-owner { margin: 0; color: #315d4b; font-size: 13px; font-weight: 800; }
+.safe-workspace-current { min-height: 3.15em; margin: 0; color: var(--muted); font-size: 14px; line-height: 1.62; overflow-wrap: anywhere; }
+.safe-workspace-meta, .safe-workspace-activity { display: grid; gap: 0; margin: 0; border-top: 1px solid var(--line); }
+.safe-workspace-meta > div, .safe-workspace-activity > div { display: grid; grid-template-columns: 72px minmax(0, 1fr); gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.safe-workspace-meta dt, .safe-workspace-activity dt { color: #65736b; font-size: 12px; font-weight: 800; }
+.safe-workspace-meta dd, .safe-workspace-activity dd { margin: 0; color: #294037; font-size: 13px; line-height: 1.55; overflow-wrap: anywhere; }
+.safe-workspace-link { color: var(--green); font-size: 13px; font-weight: 900; text-decoration: none; }
+.safe-workspace-link:hover { text-decoration: underline; text-underline-offset: 3px; }
+.safe-workspace-detail-heading { padding-bottom: 17px; border-bottom: 1px solid var(--line); }
+.safe-workspace-activity { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 22px; margin-top: 22px; border-top: 0; }
+.safe-workspace-activity > div { grid-template-columns: 86px minmax(0, 1fr); }
+.safe-workspace-detail-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 24px; }
+.safe-workspace-blockers, .safe-workspace-evidence { min-width: 0; padding: 19px; background: #f5f8f5; border-radius: 14px; }
+.safe-workspace-blockers h3, .safe-workspace-evidence h3 { margin: 0 0 13px; font-size: 15px; }
+.safe-workspace-blockers ol, .safe-workspace-evidence ul { display: grid; gap: 9px; margin: 0; padding: 0; list-style: none; }
+.safe-workspace-blockers li, .safe-workspace-evidence li { min-width: 0; padding: 13px; background: #fff; border: 1px solid var(--line); border-radius: 11px; overflow-wrap: anywhere; }
+.safe-workspace-blockers strong, .safe-workspace-evidence a, .safe-workspace-evidence strong { color: var(--green); font-size: 13px; font-weight: 900; }
+.safe-workspace-evidence a { text-underline-offset: 3px; }
+.safe-workspace-blockers p, .safe-workspace-evidence p { margin: 7px 0 0; color: var(--muted); font-size: 12px; line-height: 1.58; }
+.safe-workspace-blockers small, .safe-workspace-evidence small { display: block; margin-top: 8px; color: #78837d; font-size: 11px; line-height: 1.5; }
+.safe-workspace-link-warning { color: #8a5a14 !important; }
+.safe-workspace-alert { margin-bottom: 14px; color: #7e4210; background: var(--amber-soft); }
+.safe-workspace-alert strong { color: #7e4210; }
+.safe-workspace-alert ul { display: grid; gap: 5px; margin: 8px 0 0; padding-left: 18px; font-size: 13px; }
+.safe-workspace-error { display: flex; align-items: center; justify-content: space-between; gap: 16px; color: var(--red); background: var(--red-soft); }
+.safe-workspace-error .safe-workspace-empty { flex: 1; padding: 0; color: inherit; background: transparent; }
+.safe-workspace-retry { flex: 0 0 auto; padding: 9px 12px; color: #842d2d; background: #fffafa; border: 1px solid #e4a7a7; border-radius: 10px; font: inherit; font-size: 13px; font-weight: 800; cursor: pointer; }
+.safe-workspace-retry:hover { background: #fff; border-color: #bf5b5b; }
 .delivery-lines-rule { max-width: 70ch; margin: -8px 0 23px; color: var(--muted); line-height: 1.65; }
 .delivery-module-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
 .delivery-loading, .delivery-empty, .delivery-load-error { margin: 0; padding: 20px; color: var(--muted); background: #f3f6f2; border-radius: 14px; }
@@ -803,6 +860,11 @@ footer a { color: var(--green); font-weight: 700; }
   .delivery-metadata { text-align: left; }
   .delivery-verified, .delivery-origin { white-space: normal; }
   .delivery-scope-grid, .delivery-state-grid { grid-template-columns: 1fr; }
+  .safe-workspace-grid, .safe-workspace-detail-grid, .safe-workspace-activity { grid-template-columns: 1fr; }
+  .safe-workspace-hero { min-height: 0; padding: 30px 22px; border-radius: 18px; }
+  .safe-workspace-hero h2 { font-size: clamp(31px, 10vw, 44px); }
+  .safe-workspace-card-heading, .safe-workspace-detail-heading, .safe-workspace-error { align-items: flex-start; flex-direction: column; }
+  .safe-workspace-current { min-height: 0; }
   .delivery-load-error { align-items: flex-start; flex-direction: column; }
   .document-search { grid-template-columns: 1fr; gap: 7px; }
 }

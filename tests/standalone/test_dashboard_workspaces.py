@@ -47,3 +47,16 @@ def test_raw_workspace_route_stays_closed_in_standalone_mode() -> None:
     with TestClient(create_dashboard_app()) as client:
         response = client.get("/api/v1/project-status/development")
     assert response.status_code == 404
+
+
+def test_safe_workspace_pages_use_new_panel_only_routes() -> None:
+    with TestClient(create_dashboard_app()) as client:
+        overview = client.get("/project-status/workspaces")
+        detail = client.get("/project-status/workspaces/frontend")
+
+    assert overview.status_code == 200
+    assert detail.status_code == 200
+    assert "data-safe-workspace-overview" in overview.text
+    assert 'data-safe-workspace-detail="frontend"' in detail.text
+    assert "project-status.json" not in overview.text
+    assert "project-status.json" not in detail.text

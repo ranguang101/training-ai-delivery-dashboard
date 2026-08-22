@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light">
+    <title>{{ workspace_label }} | 项目交付看板</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='/project-status.css') }}?v=safe-workspaces-r1">
+  </head>
+  <body data-dashboard-mode="read_only_local">
+    <header class="topbar">
+      <div><h1>项目交付看板</h1></div>
+      <div class="topbar-actions">
+        {% include "_project_nav.html" %}
+        <div class="sync-panel" aria-live="polite">
+          <span class="sync-dot"></span>
+          <div><strong id="sync-status">自动同步中</strong><span>仅显示安全摘要</span></div>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="safe-workspace-hero" aria-labelledby="safe-workspace-detail-title">
+        <div>
+          <p class="safe-workspace-back"><a href="/project-status/workspaces">返回工作区</a></p>
+          <h2 id="safe-workspace-detail-title">{{ workspace_label }}</h2>
+          <p>本页只展示关联交付线、当前工作、下一步、开放门禁与受控证据链接。</p>
+        </div>
+      </section>
+
+      <section class="section-block safe-workspace-section" aria-labelledby="safe-workspace-content-title">
+        <div class="section-heading"><div><h2 id="safe-workspace-content-title">当前协作信息</h2></div></div>
+        <div data-safe-workspace-detail="{{ workspace_id }}" aria-live="polite" aria-busy="true">
+          <p class="safe-workspace-loading">正在加载工作区安全摘要…</p>
+        </div>
+      </section>
+    </main>
+
+    <footer><span>仅显示经服务端安全投影批准的协作信息。</span></footer>
+    <script src="{{ url_for('static', path='/project-status.js') }}?v=safe-workspaces-r1" defer></script>
+  </body>
+</html>

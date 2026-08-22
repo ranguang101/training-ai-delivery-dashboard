@@ -165,6 +165,13 @@ DELIVERY_STATE_LABELS = {
     "blocked": "有阻塞",
 }
 
+SAFE_WORKSPACE_PAGE_LABELS = {
+    "collaboration": "协作总览",
+    "development": "服务端工作区",
+    "frontend": "前端工作区",
+    "testing": "质量工作区",
+}
+
 PROJECT_STATUS_LOAD_ERRORS = (ValueError, OSError, json.JSONDecodeError, UnicodeDecodeError)
 
 _ANCHOR_PATTERN = re.compile(r'<a\s+href="([^"]*)"\s*>(.*?)</a>', re.DOTALL)
@@ -275,6 +282,20 @@ def _render_degraded_project_status(request: Request):
         "project_status_degraded.html",
         {"degraded": True},
         status_code=200,
+    )
+
+
+def _render_safe_workspace_page(request: Request, workspace_id: str):
+    """Render a panel-only workspace shell without loading raw status content."""
+    return _templates_for(request).TemplateResponse(
+        request,
+        "safe_workspace_overview.html"
+        if workspace_id == "collaboration"
+        else "safe_workspace_detail.html",
+        {
+            "workspace_id": workspace_id,
+            "workspace_label": SAFE_WORKSPACE_PAGE_LABELS[workspace_id],
+        },
     )
 
 
@@ -543,6 +564,34 @@ def project_collaboration_page(request: Request):
             "handoff_status_labels": HANDOFF_STATUS_LABELS,
         },
     )
+
+
+@router.get(
+    "/project-status/workspaces",
+    response_class=HTMLResponse,
+    include_in_schema=False,
+)
+def safe_workspace_overview_page(request: Request):
+    """Standalone-panel entry for the closed workspace safety projection."""
+    ensure_project_status_enabled()
+    if not _is_standalone_panel(request):
+        raise HTTPException(status_code=404, detail="PROJECT_STATUS_ROUTE_CLOSED_OUTSIDE_PANEL")
+    return _render_safe_workspace_page(request, "collaboration")
+
+
+@router.get(
+    "/project-status/workspaces/{workspace_id}",
+    response_class=HTMLResponse,
+    include_in_schema=False,
+)
+def safe_workspace_detail_page(workspace_id: str, request: Request):
+    """Standalone-panel detail shell; browser fills it from one safe endpoint."""
+    ensure_project_status_enabled()
+    if not _is_standalone_panel(request):
+        raise HTTPException(status_code=404, detail="PROJECT_STATUS_ROUTE_CLOSED_OUTSIDE_PANEL")
+    if workspace_id not in SAFE_WORKSPACE_PAGE_LABELS or workspace_id == "collaboration":
+        raise HTTPException(status_code=404, detail="PROJECT_STATUS_WORKSPACE_NOT_FOUND")
+    return _render_safe_workspace_page(request, workspace_id)
 
 
 @router.get(

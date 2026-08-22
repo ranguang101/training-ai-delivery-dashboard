@@ -5,13 +5,13 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="color-scheme" content="light">
-    <title>项目进度 | {{ project.project_name }}</title>
+    <title>{% if is_panel %}项目交付看板 | {{ project.project_name }}{% else %}项目进度 | {{ project.project_name }}{% endif %}</title>
     <link rel="stylesheet" href="{{ url_for('static', path='/project-status.css') }}?v=mvp-modules-v1">
   </head>
   <body data-last-updated="{{ project.last_updated }}" data-dashboard-mode="{{ 'read_only_local' if is_panel else 'business' }}">
     <header class="topbar">
       <div>
-        <p class="eyebrow">DELIVERY CONSOLE · 项目交付看板</p>
+        {% if not is_panel %}<p class="eyebrow">DELIVERY CONSOLE · 项目交付看板</p>{% endif %}
         <h1>{{ project.project_name }}</h1>
       </div>
       <div class="topbar-actions">
@@ -139,6 +139,7 @@
       </section>
       {% endif %}
 
+      {% if not is_panel %}
       <section class="section-block quality-entry" aria-labelledby="quality-entry-title">
         <div>
           <p class="eyebrow">QUALITY WORKSPACE</p>
@@ -147,6 +148,12 @@
         </div>
         <a class="primary-link" href="/project-status/tests">进入质量工作区 →</a>
       </section>
+      {% else %}
+      <section class="section-block safe-workspace-entry" aria-labelledby="safe-workspace-entry-title">
+        <div><h2 id="safe-workspace-entry-title">工作区安全摘要</h2><p>查看四个工作区的负责人、当前状态、下一步、开放门禁和受控证据链接。</p></div>
+        <a class="primary-link" href="/project-status/workspaces">进入工作区 →</a>
+      </section>
+      {% endif %}
 
       {% if not is_panel %}
       <section class="section-block document-entry" aria-labelledby="document-entry-title">
@@ -168,6 +175,7 @@
       </section>
       {% endif %}
 
+      {% if not is_panel %}
       <section class="work-grid">
         <article class="panel panel-highlight">
           <p class="eyebrow">NOW</p>
@@ -204,6 +212,7 @@
           {% endif %}
         </article>
       </section>
+      {% endif %}
 
       {% if not is_panel %}
       <section class="section-block acceptance" aria-labelledby="acceptance-title">
@@ -225,6 +234,7 @@
       </section>
       {% endif %}
 
+      {% if not is_panel %}
       <section class="section-block update-log" aria-labelledby="updates-title">
         <div class="section-heading">
           <div>
@@ -241,6 +251,7 @@
           {% endfor %}
         </div>
       </section>
+      {% endif %}
     </main>
 
     <footer>

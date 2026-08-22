@@ -1,6 +1,6 @@
 const syncPanel = document.querySelector(".sync-panel");
 const syncStatus = document.querySelector("#sync-status");
-const initialLastUpdated = document.body.dataset.lastUpdated;
+const initialLastUpdated = document.body.dataset.lastUpdated || null;
 const isPanelMode = document.body.dataset.dashboardMode === "read_only_local";
 
 // Only the standalone panel may poll the sync clock.  Its /api/v1/project-status
@@ -21,7 +21,7 @@ async function checkForUpdates() {
     syncPanel.classList.remove("is-error");
     syncStatus.textContent = "已连接";
 
-    if (lastUpdated !== initialLastUpdated) {
+    if (initialLastUpdated && lastUpdated !== initialLastUpdated) {
       syncStatus.textContent = "发现更新，正在刷新";
       window.location.reload();
     }
@@ -242,6 +242,199 @@ async function loadDeliveryDashboard() {
 }
 
 loadDeliveryDashboard();
+
+const safeWorkspaceRoutes = {
+  collaboration: '/project-status/workspaces',
+  development: '/project-status/workspaces/development',
+  frontend: '/project-status/workspaces/frontend',
+  testing: '/project-status/workspaces/testing',
+};
+
+function safeWorkspaceEvidenceHref(href) {
+  return typeof href === 'string'
+    && /^\/api\/v1\/project-status\/dashboard\/delivery-lines\/[A-Za-z0-9_.-]+\/evidence\/[A-Za-z0-9_.-]+$/.test(href)
+    ? href
+    : '';
+}
+
+function workspaceValue(value, fallback = '待核对') {
+  return typeof value === 'string' && value.trim() ? value : fallback;
+}
+
+function workspaceWarningList(warnings) {
+  if (!Array.isArray(warnings) || !warnings.length) return null;
+  const alert = dashboardElement('section', 'safe-workspace-alert');
+  alert.setAttribute('role', 'alert');
+  alert.append(dashboardElement('strong', '', '工作区数据待核对'));
+  const list = dashboardElement('ul');
+  warnings.forEach((warning) => list.append(dashboardElement('li', '', workspaceValue(warning, '安全数据源返回了未说明的提示。'))));
+  alert.append(list);
+  return alert;
+}
+
+function workspaceMeta(label, value) {
+  const row = dashboardElement('div');
+  row.append(dashboardElement('dt', '', label), dashboardElement('dd', '', value));
+  return row;
+}
+
+function workspaceOverviewCard(workspace) {
+  const route = safeWorkspaceRoutes[workspace?.id];
+  if (!route) return null;
+  const card = dashboardElement('article', 'safe-workspace-card');
+  const heading = dashboardElement('div', 'safe-workspace-card-heading');
+  const title = dashboardElement('h3', '', workspaceValue(workspace.display_label, '工作区待核对'));
+  const status = dashboardElement('span', 'safe-workspace-status', workspaceValue(workspace.status_label));
+  heading.append(title, status);
+  card.append(heading);
+  card.append(dashboardElement('p', 'safe-workspace-owner', `负责人：${workspaceValue(workspace.owner_role_label)}`));
+  card.append(dashboardElement('p', 'safe-workspace-current', workspaceValue(workspace.current, '当前工作待核对。')));
+  const meta = dashboardElement('dl', 'safe-workspace-meta');
+  meta.append(
+    workspaceMeta('下一步', workspaceValue(workspace.next, '待核对')),
+    workspaceMeta('核对时间', workspaceValue(workspace.checked_at || workspace.updated_at)),
+  );
+  card.append(meta);
+  const link = dashboardElement('a', 'safe-workspace-link', `查看${workspaceValue(workspace.display_label, '工作区')} →`);
+  link.href = route;
+  card.append(link);
+  return card;
+}
+
+function renderSafeWorkspaceOverview(view) {
+  const target = document.querySelector('[data-safe-workspace-overview]');
+  if (!target) return;
+  const workspaces = Array.isArray(view?.workspaces) ? view.workspaces : [];
+  target.replaceChildren();
+  target.setAttribute('aria-busy', 'false');
+  const warnings = workspaceWarningList(view?.warnings);
+  if (warnings) target.append(warnings);
+  if (!workspaces.length) {
+    target.append(dashboardElement('p', 'safe-workspace-empty', '当前未显示任何工作区状态。请确认安全数据源可用后刷新页面。'));
+    return;
+  }
+  const grid = dashboardElement('div', 'safe-workspace-grid');
+  workspaces.forEach((workspace) => {
+    const card = workspaceOverviewCard(workspace);
+    if (card) grid.append(card);
+  });
+  if (!grid.children.length) {
+    target.append(dashboardElement('p', 'safe-workspace-empty', '当前未显示任何可识别的工作区状态。'));
+    return;
+  }
+  target.append(grid);
+}
+
+function appendWorkspaceEvidence(parent, evidenceLinks) {
+  const section = dashboardElement('section', 'safe-workspace-evidence');
+  section.append(dashboardElement('h3', '', '已核对证据'));
+  const list = dashboardElement('ul');
+  (Array.isArray(evidenceLinks) ? evidenceLinks : []).forEach((item) => {
+    const row = dashboardElement('li');
+    const href = safeWorkspaceEvidenceHref(item?.href);
+    if (href) {
+      const link = dashboardElement('a', '', workspaceValue(item?.label, '安全证据'));
+      link.href = href;
+      row.append(link);
+    } else {
+      row.append(dashboardElement('strong', '', workspaceValue(item?.label, '安全证据待核对')));
+      row.append(dashboardElement('p', 'safe-workspace-link-warning', '证据链接未通过安全白名单校验，已停用。'));
+    }
+    row.append(dashboardElement('p', '', workspaceValue(item?.safe_summary, '未提供安全摘要。')));
+    row.append(dashboardElement('small', '', `来源角色：${workspaceValue(item?.source_role_label)} · 核对：${workspaceValue(item?.checked_at || item?.verified_at)}`));
+    list.append(row);
+  });
+  if (!list.children.length) list.append(dashboardElement('li', '', '暂无已核对证据；待继续核对。'));
+  section.append(list);
+  parent.append(section);
+}
+
+function appendWorkspaceBlockers(parent, blockers) {
+  const section = dashboardElement('section', 'safe-workspace-blockers');
+  section.append(dashboardElement('h3', '', '开放门禁'));
+  const list = dashboardElement('ol');
+  (Array.isArray(blockers) ? blockers : []).forEach((item) => {
+    const row = dashboardElement('li');
+    row.append(dashboardElement('strong', '', workspaceValue(item?.title, '门禁待核对')));
+    row.append(dashboardElement('p', '', workspaceValue(item?.next_action, '最小解除条件待核对。')));
+    row.append(dashboardElement('small', '', `状态：${deliveryStateLabel(item?.status)} · 更新：${workspaceValue(item?.updated_at)}`));
+    list.append(row);
+  });
+  if (!list.children.length) list.append(dashboardElement('li', '', '当前未登记开放门禁；仍需继续核对。'));
+  section.append(list);
+  parent.append(section);
+}
+
+function renderSafeWorkspaceDetail(view, workspaceId) {
+  const target = document.querySelector('[data-safe-workspace-detail]');
+  if (!target) return;
+  const workspaces = Array.isArray(view?.workspaces) ? view.workspaces : [];
+  const workspace = workspaces.find((item) => item?.id === workspaceId);
+  target.replaceChildren();
+  target.setAttribute('aria-busy', 'false');
+  const warnings = workspaceWarningList(view?.warnings);
+  if (warnings) target.append(warnings);
+  if (!workspace) {
+    const message = dashboardElement('p', 'safe-workspace-empty', '当前未显示该工作区状态。请确认安全数据源可用后刷新页面。');
+    message.setAttribute('role', 'alert');
+    target.append(message);
+    return;
+  }
+  const header = dashboardElement('header', 'safe-workspace-detail-heading');
+  header.append(
+    dashboardElement('h3', '', workspaceValue(workspace.display_label, '工作区待核对')),
+    dashboardElement('span', 'safe-workspace-status', workspaceValue(workspace.status_label)),
+  );
+  target.append(header, dashboardElement('p', 'safe-workspace-owner', `负责人：${workspaceValue(workspace.owner_role_label)}`));
+
+  const activity = dashboardElement('dl', 'safe-workspace-activity');
+  activity.append(
+    workspaceMeta('当前工作', workspaceValue(workspace.current, '待核对')),
+    workspaceMeta('下一步', workspaceValue(workspace.next, '待核对')),
+    workspaceMeta('关联交付线', Array.isArray(workspace.delivery_line_refs) && workspace.delivery_line_refs.length ? workspace.delivery_line_refs.join(' · ') : '待核对'),
+    workspaceMeta('最近核对', workspaceValue(workspace.checked_at || workspace.updated_at)),
+  );
+  target.append(activity);
+
+  const detailGrid = dashboardElement('div', 'safe-workspace-detail-grid');
+  appendWorkspaceBlockers(detailGrid, workspace.open_blockers);
+  appendWorkspaceEvidence(detailGrid, workspace.evidence_links);
+  target.append(detailGrid);
+}
+
+function renderSafeWorkspaceError(target) {
+  const message = dashboardElement('p', 'safe-workspace-empty', '工作区安全摘要未加载：当前未显示任何工作区状态。请确认安全看板服务可用后重试。');
+  message.setAttribute('role', 'alert');
+  const retry = dashboardElement('button', 'safe-workspace-retry', '重新加载工作区');
+  retry.type = 'button';
+  retry.addEventListener('click', () => loadSafeWorkspaces());
+  const panel = dashboardElement('div', 'safe-workspace-error');
+  panel.append(message, retry);
+  target.replaceChildren(panel);
+  target.setAttribute('aria-busy', 'false');
+}
+
+async function loadSafeWorkspaces() {
+  const overview = document.querySelector('[data-safe-workspace-overview]');
+  const detail = document.querySelector('[data-safe-workspace-detail]');
+  if (!overview && !detail) return;
+  const target = overview || detail;
+  target.setAttribute('aria-busy', 'true');
+  try {
+    const response = await fetch('/api/v1/project-status/dashboard/workspaces', { cache: 'no-store' });
+    if (!response.ok) throw new Error('workspace dashboard request failed');
+    const payload = await response.json();
+    if (!payload?.success || !payload?.data || !Array.isArray(payload.data.workspaces)) {
+      throw new Error('workspace dashboard projection invalid');
+    }
+    if (overview) renderSafeWorkspaceOverview(payload.data);
+    if (detail) renderSafeWorkspaceDetail(payload.data, detail.dataset.safeWorkspaceDetail);
+  } catch (error) {
+    renderSafeWorkspaceError(target);
+  }
+}
+
+loadSafeWorkspaces();
 
 document.querySelectorAll('[data-release-expand]').forEach((button) => {
   button.addEventListener('click', () => {
