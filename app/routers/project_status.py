@@ -1,4 +1,8 @@
 import json
+import posixpath
+import re
+from html import escape as html_escape
+from html import unescape as html_unescape
 from pathlib import Path
 
 from fastapi import APIRouter, HTTPException, Request
@@ -161,6 +165,66 @@ DELIVERY_STATE_LABELS = {
 }
 
 PROJECT_STATUS_LOAD_ERRORS = (ValueError, OSError, json.JSONDecodeError, UnicodeDecodeError)
+
+_ANCHOR_PATTERN = re.compile(r'<a\s+href="([^"]*)"\s*>(.*?)</a>', re.DOTALL)
+
+
+def _resolve_document_link(
+    href: str, document: dict, documents_by_relative_path: dict[str, str]
+) -> tuple[str, str | None]:
+    """Classify one link target: (keep|canonical|neutralize, new_href)."""
+    value = html_unescape(href).strip()
+    if not value:
+        return "neutralize", None
+    fragment = ""
+    if "#" in value:
+        value, fragment = value.split("#", 1)
+    lowered = value.lower()
+    if lowered.startswith(("file:", "javascript:", "vbscript:", "data:")):
+        return "neutralize", None
+    if (
+        not lowered.endswith(".md")
+        or lowered.startswith(("http:", "https:", "mailto:", "/", "#"))
+        or "://" in value
+    ):
+        return "keep", None
+    document_dir = posixpath.dirname(document["relative_path"])
+    resolved = posixpath.normpath(
+        posixpath.join(document_dir, value) if document_dir else value
+    )
+    if resolved.startswith("../") or resolved == "..":
+        return "neutralize", None
+    document_id = documents_by_relative_path.get(resolved)
+    if document_id is None:
+        return "neutralize", None
+    suffix = f"#{html_escape(fragment, quote=True)}" if fragment else ""
+    return "canonical", f"/project-status/documents/{document_id}{suffix}"
+
+
+def rewrite_document_links(
+    rendered_html: str, document: dict, documents: list[dict]
+) -> str:
+    """Rewrite in-project Markdown links to canonical document URLs.
+
+    Applied on the sanitized render: raw relative ``requirements/...md`` links
+    become ``/project-status/documents/{id}``, and stale targets degrade to
+    plain text so readers never land on filesystem-relative paths.
+    """
+    documents_by_relative_path = {item["relative_path"]: item["id"] for item in documents}
+
+    def replacement(match: re.Match[str]) -> str:
+        href, inner = match.group(1), match.group(2)
+        action, value = _resolve_document_link(href, document, documents_by_relative_path)
+        if action == "keep":
+            return match.group(0)
+        if action == "neutralize":
+            return (
+                f'<span class="doc-link-missing" title="目标文档已迁移或已删除">'
+                f"{inner}</span>"
+            )
+        return f'<a href="{html_escape(value, quote=True)}">{inner}</a>'
+
+    return _ANCHOR_PATTERN.sub(replacement, rendered_html)
 
 
 def ensure_project_status_enabled() -> None:
@@ -515,6 +579,9 @@ def project_document_detail_page(document_id: str, request: Request):
     try:
         document = load_document(document_id)
         document_html = render_document(document)
+        document_html = rewrite_document_links(
+            document_html, document, build_document_catalog()["documents"]
+        )
     except KeyError as exc:
         raise HTTPException(status_code=404, detail="PROJECT_DOCUMENT_NOT_FOUND") from exc
     return templates.TemplateResponse(

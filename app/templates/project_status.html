@@ -8,7 +8,7 @@
     <title>项目进度 | {{ project.project_name }}</title>
     <link rel="stylesheet" href="{{ url_for('static', path='/project-status.css') }}?v=mvp-modules-v1">
   </head>
-  <body data-last-updated="{{ project.last_updated }}">
+  <body data-last-updated="{{ project.last_updated }}" data-dashboard-mode="{{ 'read_only_local' if is_panel else 'business' }}">
     <header class="topbar">
       <div>
         <p class="eyebrow">DELIVERY CONSOLE · 项目交付看板</p>
@@ -16,6 +16,7 @@
       </div>
       <div class="topbar-actions">
         {% include "_project_nav.html" %}
+        {% if is_panel %}
         <div class="sync-panel" aria-live="polite">
           <span class="sync-dot"></span>
           <div>
@@ -23,6 +24,7 @@
             <span>每 10 秒检查更新</span>
           </div>
         </div>
+        {% endif %}
       </div>
     </header>
 
@@ -81,7 +83,7 @@
                     <section class="delivery-scope"><h4>{{ title }}</h4><ul>{% for item in items %}<li>{{ item.label }}</li>{% else %}<li>未提供</li>{% endfor %}</ul></section>
                     {% endfor %}
                   </div>
-                  <section class="delivery-evidence"><h4>已核对证据</h4><ul>{% for evidence in line.evidence_links %}<li><a href="{{ evidence.href }}">{{ evidence.label }}</a><span class="evidence-level">{{ evidence.display_label }}</span><p>{{ evidence.safe_summary }}</p><small>来源角色：{{ evidence.source_role_label or '待核对' }} · 核对：{{ evidence.checked_at or '待核对' }}</small></li>{% endfor %}</ul></section>
+                  <section class="delivery-evidence"><h4>已核对证据</h4><ul>{% for evidence in line.evidence_links %}<li>{% set expected_evidence_href = '/api/v1/project-status/dashboard/delivery-lines/' ~ line.id ~ '/evidence/' ~ evidence.id %}{% if evidence.href == expected_evidence_href %}<a href="{{ evidence.href }}">{{ evidence.label }}</a>{% else %}<strong class="evidence-label-blocked">{{ evidence.label }}</strong><p class="evidence-link-degraded">证据链接不可用：未通过安全白名单校验。</p>{% endif %}<span class="evidence-level">{{ evidence.display_label }}</span><p>{{ evidence.safe_summary }}</p><small>来源角色：{{ evidence.source_role_label or '待核对' }} · 核对：{{ evidence.checked_at or '待核对' }}</small></li>{% endfor %}</ul></section>
                   <section class="delivery-blockers"><h4>全部开放门禁</h4><ol>{% for blocker in line.open_blockers %}<li><strong>{{ blocker.title }}</strong><p>{{ blocker.next_action }}</p><small>状态：{{ delivery_state_labels.get(blocker.status, blocker.status or '待核对') }} · 更新：{{ blocker.updated_at or '待核对' }}</small></li>{% endfor %}</ol></section>
                 </div>
               </details>

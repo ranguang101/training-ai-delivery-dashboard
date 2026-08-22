@@ -98,6 +98,7 @@ def test_sanitize_html_blocks_individual_vectors(payload: str) -> None:
 
 def test_document_detail_page_renders_sanitized_markdown(monkeypatch, tmp_path) -> None:
     from app.main import app
+
     from app.services import document_catalog
 
     monkeypatch.setenv("PROJECT_STATUS_ENABLED", "true")
@@ -117,11 +118,15 @@ def test_document_detail_page_renders_sanitized_markdown(monkeypatch, tmp_path) 
 
     assert response.status_code == 200
     lowered = response.text.lower()
-    assert "<table>" in lowered
-    assert "<script" not in lowered
-    assert "javascript:" not in lowered
-    assert "onerror" not in lowered
-    assert "<iframe" not in lowered
+    # 断言范围限定为渲染后的文档正文；页面模板自带的静态脚本标签不属于注入内容。
+    body_start = lowered.index('class="markdown-body"')
+    body_end = lowered.index("</article>", body_start)
+    document_body = lowered[body_start:body_end]
+    assert "<table>" in document_body
+    assert "<script" not in document_body
+    assert "javascript:" not in document_body
+    assert "onerror" not in document_body
+    assert "<iframe" not in document_body
 
 
 def test_stage_requirements_rendering_is_sanitized(tmp_path) -> None:

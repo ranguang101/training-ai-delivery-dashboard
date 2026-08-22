@@ -1,18 +1,27 @@
 const syncPanel = document.querySelector(".sync-panel");
 const syncStatus = document.querySelector("#sync-status");
 const initialLastUpdated = document.body.dataset.lastUpdated;
+const isPanelMode = document.body.dataset.dashboardMode === "read_only_local";
 
+// Only the standalone panel may poll the sync clock.  Its /api/v1/project-status
+// response is a server-approved lightweight projection ({project_name,
+// last_updated}); the business app still returns full data there and must not
+// be polled periodically.
 async function checkForUpdates() {
   if (!syncPanel || !syncStatus) return;
   try {
     const response = await fetch("/api/v1/project-status", { cache: "no-store" });
     if (!response.ok) throw new Error("status request failed");
     const payload = await response.json();
+    const lastUpdated = payload && payload.data && typeof payload.data.last_updated === "string"
+      ? payload.data.last_updated
+      : null;
+    if (lastUpdated === null) throw new Error("sync projection invalid");
 
     syncPanel.classList.remove("is-error");
     syncStatus.textContent = "已连接";
 
-    if (payload.data.last_updated !== initialLastUpdated) {
+    if (lastUpdated !== initialLastUpdated) {
       syncStatus.textContent = "发现更新，正在刷新";
       window.location.reload();
     }
@@ -22,7 +31,8 @@ async function checkForUpdates() {
   }
 }
 
-if (syncPanel && syncStatus) {
+if (isPanelMode && syncPanel && syncStatus) {
+  checkForUpdates();
   window.setInterval(checkForUpdates, 10000);
 }
 
@@ -90,6 +100,10 @@ function appendDeliveryScope(parent, title, items) {
   parent.append(section);
 }
 
+function safeEvidenceHref(lineId, evidenceId) {
+  return `/api/v1/project-status/dashboard/delivery-lines/${encodeURIComponent(lineId)}/evidence/${encodeURIComponent(evidenceId)}`;
+}
+
 function appendDeliveryDetails(article, line) {
   const details = dashboardElement('details', 'delivery-details');
   const summary = dashboardElement('summary', '', '查看门槛、证据与后置范围');
@@ -109,9 +123,17 @@ function appendDeliveryDetails(article, line) {
   evidence.append(dashboardElement('h4', '', '已核对证据'));
   (Array.isArray(line.evidence_links) ? line.evidence_links : []).forEach((item) => {
     const node = dashboardElement('li');
-    const link = dashboardElement('a', '', item.label || '安全证据');
-    link.href = item.href || '#'; link.dataset.deliveryEvidence = item.id || '';
-    node.append(link, dashboardElement('span', 'evidence-level', item.display_label || '待核对'));
+    const allowedHref = safeEvidenceHref(line.id, item.id);
+    if (typeof item.href === 'string' && item.href === allowedHref) {
+      const link = dashboardElement('a', '', item.label || '安全证据');
+      link.href = allowedHref;
+      link.dataset.deliveryEvidence = item.id || '';
+      node.append(link);
+    } else {
+      node.append(dashboardElement('strong', 'evidence-label-blocked', item.label || '安全证据'));
+      node.append(dashboardElement('p', 'evidence-link-degraded', '证据链接不可用：未通过安全白名单校验。'));
+    }
+    node.append(dashboardElement('span', 'evidence-level', item.display_label || '待核对'));
     node.append(dashboardElement('p', '', item.safe_summary || '未提供'));
     node.append(dashboardElement('small', '', `来源角色：${sourceRoleLabel(item.source_role, item.source_role_label)} · 核对：${item.checked_at || '未提供'}`));
     evidenceList.append(node);
@@ -138,13 +160,6 @@ function appendDeliveryDetails(article, line) {
 function renderDeliveryDashboard(view) {
   const target = document.querySelector('[data-delivery-lines-content]');
   const lines = Array.isArray(view?.delivery_lines) ? view.delivery_lines : [];
-  const firstLine = lines[0];
-  document.querySelectorAll('[data-delivery-nav-link]').forEach((link) => {
-    if (!firstLine) return;
-    link.hidden = false;
-    link.href = `/project-status#delivery-line-${firstLine.id}`;
-    link.textContent = `交付线 · ${firstLine.name}`;
-  });
   if (!target) return;
   target.replaceChildren();
   target.setAttribute('aria-busy', 'false');
@@ -198,18 +213,21 @@ function renderDeliveryDashboardError(target) {
     'delivery-load-error-message',
     '交付线证据未加载：当前未显示任何交付状态。请确认安全看板服务可用后重试。',
   );
+  // role=alert belongs on the non-interactive message so the retry button
+  // stays focusable and is announced separately.
+  errorMessage.setAttribute('role', 'alert');
   const retryButton = dashboardElement('button', 'delivery-retry', '重新加载交付线');
   retryButton.type = 'button';
   retryButton.addEventListener('click', () => loadDeliveryDashboard());
 
   const errorPanel = dashboardElement('div', 'delivery-load-error');
-  errorPanel.setAttribute('role', 'alert');
+  errorPanel.setAttribute('aria-live', 'assertive');
   errorPanel.append(errorMessage, retryButton);
   target.replaceChildren(errorPanel);
 }
 
 async function loadDeliveryDashboard() {
-  if (!document.querySelector('[data-delivery-lines-content], [data-delivery-nav-link]')) return;
+  if (!document.querySelector('[data-delivery-lines-content]')) return;
   const target = document.querySelector('[data-delivery-lines-content]');
   if (target) target.setAttribute('aria-busy', 'true');
   try {
@@ -249,37 +267,6 @@ document.querySelectorAll('[data-release-copy]').forEach((button) => {
       button.textContent = '复制失败';
     }
     window.setTimeout(() => { button.textContent = '复制'; }, 1600);
-  });
-});
-
-document.querySelectorAll('[data-prototype-target]').forEach((button) => {
-  button.addEventListener('click', () => {
-    const target = button.dataset.prototypeTarget;
-    document.querySelectorAll('[data-prototype-target]').forEach((tab) => {
-      tab.setAttribute('aria-selected', String(tab === button));
-    });
-    document.querySelectorAll('[data-prototype-panel]').forEach((panel) => {
-      const active = panel.dataset.prototypePanel === target;
-      panel.hidden = !active;
-      panel.classList.toggle('is-active', active);
-    });
-  });
-});
-
-document.querySelectorAll('[data-prototype-action]').forEach((button) => {
-  button.addEventListener('click', () => {
-    const notice = document.querySelector('.prototype-demo-notice');
-    const action = button.dataset.prototypeAction;
-    const messages = {
-      approve: '演示：审批已确认，下一步将进入操作留痕。',
-      view: '演示：已展开学生资料的只读查看状态。',
-      'start-record': '演示：已进入学习记录编辑准备状态。',
-      'open-record': '演示：已打开所选学习记录的详情状态。',
-      primary: '演示：主要操作已执行并显示成功反馈。',
-      secondary: '演示：次要操作已执行，原型保持当前数据。',
-    };
-    if (notice) notice.textContent = messages[action] || '演示：操作已执行。';
-    button.dataset.prototypeActionDone = 'true';
   });
 });
 
@@ -458,3 +445,26 @@ async function loadTestAutomation() {
 }
 
 loadTestAutomation();
+
+// Document reading pages render server-side canonical links; this guard enforces
+// the same policy for anything the server missed (raw relative paths, file: or
+// other schemes).  Unapproved links degrade to plain text, never to a clickable
+// filesystem-relative target.
+function guardDocumentLinks() {
+  const body = document.querySelector('.markdown-body[data-document-link-guard]');
+  if (!body) return;
+  body.querySelectorAll('a[href]').forEach((link) => {
+    const href = link.getAttribute('href') || '';
+    const isAllowed = /^\/project-status\/documents\/[A-Za-z0-9]+(?:#.*)?$/.test(href)
+      || href.startsWith('#')
+      || /^(https?:|mailto:)/i.test(href);
+    if (isAllowed) return;
+    const replacement = document.createElement('span');
+    replacement.className = 'doc-link-missing';
+    replacement.title = '目标链接未通过站内文档安全校验，已停用';
+    replacement.textContent = link.textContent;
+    link.replaceWith(replacement);
+  });
+}
+
+guardDocumentLinks();

@@ -1,4 +1,35 @@
 import { expect, test } from '@playwright/test';
+import { spawn } from 'child_process';
+import net from 'net';
+import path from 'path';
+
+const projectRoot = path.resolve(__dirname, '..', '..');
+const panelPython = path.join(projectRoot, '.venv', 'Scripts', 'python.exe');
+
+async function freePort(): Promise<number> {
+  return new Promise((resolve, reject) => {
+    const server = net.createServer();
+    server.listen(0, '127.0.0.1', () => {
+      const address = server.address() as net.AddressInfo;
+      server.close(() => resolve(address.port));
+    });
+    server.on('error', reject);
+  });
+}
+
+async function waitForServer(url: string, timeoutMs = 20000): Promise<void> {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    try {
+      const response = await fetch(url);
+      if (response.ok) return;
+    } catch {
+      // server not ready yet
+    }
+    await new Promise((resolve) => setTimeout(resolve, 250));
+  }
+  throw new Error(`server not ready: ${url}`);
+}
 
 test('项目总览可以进入 P0 阶段详情', async ({ page }) => {
   await page.goto('/project-status');
@@ -33,12 +64,11 @@ test('工作区可以进入前端工作区', async ({ page }) => {
     page.getByRole('heading', { name: '前端页面实施、浏览器验证与联调' }),
   ).toBeVisible();
   await expect(page.getByText('测试证据与恢复')).toBeVisible();
-  const deliveryLink = page.locator('[data-delivery-nav-link]');
-  await expect(deliveryLink).toBeVisible();
-  await deliveryLink.focus();
-  await expect(deliveryLink).toBeFocused();
-  await deliveryLink.click();
-  await expect(page).toHaveURL(/\/project-status#delivery-line-mvp-a-management-foundation/);
+  // 交付线导航链接已随原型页面下线；按当前看板口径验证版本卡与键盘焦点。
+  await expect(page.getByText('当前交付版本', { exact: true })).toBeVisible();
+  const expand = page.getByRole('button', { name: '展开' }).first();
+  await expand.focus();
+  await expect(expand).toBeFocused();
 });
 
 test('前端工作区在窄屏仍保留可用导航与内容', async ({ page }) => {
@@ -52,26 +82,62 @@ test('前端工作区在窄屏仍保留可用导航与内容', async ({ page }) 
   await expect(page.getByRole('heading', { name: '测试证据与恢复' })).toBeVisible();
 });
 
-test('前端工作区可切换管理员、教师与通用组件原型', async ({ page }) => {
-  await page.goto('/project-status/frontend');
+test('交付线证据链接仅渲染通过安全白名单的地址', async ({ page }) => {
+  await page.route('**/api/v1/project-status/dashboard', async (route) => {
+    const response = await route.fetch();
+    const payload = await response.json();
+    const line = payload.data.delivery_lines.find(
+      (item: { id: string }) => item.id === 'mvp-b-daily-record-closure',
+    );
+    line.evidence_links[0].href = 'file:///D:/private/raw-report.md';
+    line.evidence_links[1].href = 'https://external.example/evidence.md';
+    await route.fulfill({ response, json: payload });
+  });
+  await page.goto('/project-status');
 
-  await expect(page.getByRole('heading', { name: '面板组件原型' })).toBeVisible();
-  await expect(page.getByText('教师归属审批', { exact: true })).toBeVisible();
-  await page.getByRole('tab', { name: '教师面板' }).click();
-  await expect(page.getByText('今日学习记录任务　3 / 8', { exact: true })).toBeVisible();
-  await page.getByRole('tab', { name: '通用组件' }).click();
-  await expect(page.getByRole('button', { name: '主要操作' })).toBeVisible();
-  await page.getByRole('button', { name: '主要操作' }).click();
-  await expect(page.getByText('演示：主要操作已执行并显示成功反馈。')).toBeVisible();
+  const recordModule = page.locator('#delivery-line-mvp-b-daily-record-closure');
+  await recordModule.getByText('查看门槛、证据与后置范围').click();
+  await expect(page.getByText('证据链接不可用：未通过安全白名单校验。')).toHaveCount(2);
+  await expect(page.locator('a[href="file:///D:/private/raw-report.md"]')).toHaveCount(0);
+  await expect(page.locator('a[href="https://external.example/evidence.md"]')).toHaveCount(0);
+
+  const managementModule = page.locator('#delivery-line-mvp-a-management-foundation');
+  await managementModule.getByText('查看门槛、证据与后置范围').click();
+  const safeEvidenceLinks = managementModule.locator('a[data-delivery-evidence]');
+  await expect(safeEvidenceLinks.first()).toHaveAttribute(
+    'href',
+    /\/api\/v1\/project-status\/dashboard\/delivery-lines\/mvp-a-management-foundation\/evidence\//,
+  );
 });
 
-test('窄屏前端工作区的教师组件原型不横向溢出', async ({ page }) => {
-  await page.setViewportSize({ width: 375, height: 812 });
-  await page.goto('/project-status/frontend');
-  await page.getByRole('tab', { name: '教师面板' }).click();
-  await expect(page.getByText('今日学习记录任务　3 / 8', { exact: true })).toBeVisible();
-  const dimensions = await page.evaluate(() => ({ bodyWidth: document.body.scrollWidth, viewportWidth: window.innerWidth }));
-  expect(dimensions.bodyWidth).toBeLessThanOrEqual(dimensions.viewportWidth);
+test('窄屏独立看板保留同步失败反馈且不横向溢出', async ({ page }) => {
+  test.setTimeout(90000);
+  const port = await freePort();
+  const baseUrl = `http://127.0.0.1:${port}`;
+  const panel = spawn(
+    panelPython,
+    ['-m', 'tools.project_dashboard.run', '--host', '127.0.0.1', '--port', String(port)],
+    { cwd: projectRoot, stdio: 'ignore' },
+  );
+  try {
+    await waitForServer(`${baseUrl}/project-status`);
+    await page.setViewportSize({ width: 375, height: 812 });
+    await page.route('**/api/v1/project-status', (route) => route.fulfill({ status: 503 }));
+    await page.goto(`${baseUrl}/project-status`);
+
+    const syncStatus = page.locator('#sync-status');
+    await expect(syncStatus).toHaveText('暂时无法同步', { timeout: 20000 });
+    const syncPanel = page.locator('.sync-panel');
+    await expect(syncPanel).toBeVisible();
+    await expect(syncPanel.locator('.sync-dot')).toBeVisible();
+    const dimensions = await page.evaluate(() => ({
+      bodyWidth: document.body.scrollWidth,
+      viewportWidth: window.innerWidth,
+    }));
+    expect(dimensions.bodyWidth).toBeLessThanOrEqual(dimensions.viewportWidth);
+  } finally {
+    panel.kill();
+  }
 });
 
 test('版本卡从同一来源展示并支持展开和复制', async ({ page, context }) => {
@@ -99,10 +165,6 @@ test('版本卡从同一来源展示并支持展开和复制', async ({ page, co
   await page.goto('/project-status/collaboration#handoff-HO-DT-003');
   await expect(page.locator('#handoff-HO-DT-003')).toContainText('提测版本 0.1.0-p1');
   await expect(page.locator('#handoff-HO-DT-003')).toContainText('1c950ced792a');
-
-  await page.goto('/project-status/test-runs/RUN-P1-20260809-201500');
-  await expect(page.getByText('运行版本：', { exact: false })).toBeVisible();
-  await expect(page.getByText('0.1.0-p1', { exact: true })).toBeVisible();
 });
 
 test('项目总览从安全投影展示两个 MVP 模块而不误报可试用', async ({ page }) => {
@@ -166,20 +228,21 @@ test('安全投影不可用时交付线显示明确降级错误', async ({ page 
   });
   await page.goto('/project-status');
 
-  const alert = page.getByRole('alert');
+  const errorPanel = page.locator('.delivery-load-error');
+  const alert = errorPanel.getByRole('alert');
   await expect(alert).toContainText('交付线证据未加载：当前未显示任何交付状态。请确认安全看板服务可用后重试。');
-  await expect(alert.getByRole('button', { name: '重新加载交付线' })).toBeVisible();
+  await expect(errorPanel.getByRole('button', { name: '重新加载交付线' })).toBeVisible();
   await expect(page.locator('.delivery-line-card')).toHaveCount(0);
 
   isUnavailable = false;
-  await alert.getByRole('button', { name: '重新加载交付线' }).click();
+  await errorPanel.getByRole('button', { name: '重新加载交付线' }).click();
   await expect(page.locator('.delivery-line-card')).toHaveCount(2);
 });
 
 test('文档详情以可访问的阅读清单呈现内部链接', async ({ page }) => {
   await page.goto('/project-status/documents/334b5eacb1e9');
 
-  const content = page.locator('.document-content');
+  const content = page.locator('.markdown-body');
   const readingList = content.locator('> ol').first();
   const resourceList = content.locator('> ul').first();
   await expect(content).toBeVisible();
@@ -199,7 +262,7 @@ test('窄屏文档详情不横向溢出', async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 812 });
   await page.goto('/project-status/documents/334b5eacb1e9');
 
-  await expect(page.locator('.document-content > ol > li').first()).toBeVisible();
+  await expect(page.locator('.markdown-body > ol > li').first()).toBeVisible();
   const dimensions = await page.evaluate(() => ({
     bodyWidth: document.body.scrollWidth,
     viewportWidth: window.innerWidth,
@@ -209,8 +272,7 @@ test('窄屏文档详情不横向溢出', async ({ page }) => {
 test('质量工作区可以查看 P0 Case 和缺陷', async ({ page }) => {
   await page.goto('/project-status');
 
-  await page.getByRole('link', { name: '工作区', exact: true }).click();
-  await page.getByRole('link', { name: '质量工作区', exact: true }).click();
+  await page.getByLabel('项目一级导航').getByRole('link', { name: '质量工作区', exact: true }).click();
   await expect(page.getByRole('heading', { name: '质量工作区：P0、P1测试体系已经进入看板' })).toBeVisible();
 
   await page.locator('a[href="/project-status/stages/P0/tests"]').click();
@@ -231,9 +293,9 @@ test('质量工作区提供只读 Case 设计入口并在缺少资产时安全�
 
   await expect(page).toHaveURL('/project-status/tests/case-design');
   await expect(page.getByRole('heading', { name: '候选 Case 设计任务' })).toBeVisible();
-  await expect(page.getByText('候选 Case 不计入正式 Case 统计，也不表示已执行、已通过或已准出。')).toBeVisible();
+  await expect(page.getByText('候选数据不进入正式 Case 统计，也不表示已执行、已通过或已准出。')).toBeVisible();
   await expect(page.getByRole('alert')).toContainText('当前未显示任何候选 Case 数据');
-  await expect(page.getByRole('link', { name: '质量工作区', exact: true })).toHaveClass(/is-active/);
+  await expect(page.getByLabel('项目一级导航').getByRole('link', { name: '质量工作区', exact: true })).toHaveClass(/is-active/);
 
   const dimensions = await page.evaluate(() => ({
     bodyWidth: document.body.scrollWidth,

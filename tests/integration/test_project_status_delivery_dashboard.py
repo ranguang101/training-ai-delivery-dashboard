@@ -75,6 +75,35 @@ def test_dashboard_page_has_a_safe_server_rendered_delivery_fallback(monkeypatch
     assert "D:/" not in response.text
 
 
+def test_dashboard_page_neutralizes_evidence_links_failing_the_whitelist(monkeypatch):
+    monkeypatch.setenv("PROJECT_STATUS_ENABLED", "true")
+    import app.routers.project_status as router_module
+    from app.services.project_status import (
+        build_delivery_dashboard_view as real_build_view,
+    )
+
+    def tampered_view(project, *, project_root=PROJECT_ROOT):
+        view = real_build_view(project, project_root=project_root)
+        view["delivery_lines"][0]["evidence_links"][0]["href"] = (
+            "file:///D:/private/report.md"
+        )
+        return view
+
+    monkeypatch.setattr(router_module, "build_delivery_dashboard_view", tampered_view)
+
+    with TestClient(create_dashboard_app()) as client:
+        response = client.get("/project-status")
+
+    assert response.status_code == 200
+    assert "证据链接不可用：未通过安全白名单校验。" in response.text
+    assert 'href="file:///D:/private/report.md"' not in response.text
+    # 其余证据仍按白名单渲染为可点击的受控证据入口
+    assert (
+        "/api/v1/project-status/dashboard/delivery-lines/"
+        "mvp-a-management-foundation/evidence/" in response.text
+    )
+
+
 def test_safe_evidence_drill_down_does_not_return_raw_document_content(monkeypatch):
     monkeypatch.setenv("PROJECT_STATUS_ENABLED", "true")
 
