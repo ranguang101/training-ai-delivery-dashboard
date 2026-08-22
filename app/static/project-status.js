@@ -278,6 +278,17 @@ function workspaceMeta(label, value) {
   return row;
 }
 
+function workspaceCompletedItems(workspace) {
+  return Array.isArray(workspace?.completed_items) && workspace.completed_items.length
+    ? workspace.completed_items
+    : null;
+}
+
+function workspaceCompletedSummary(workspace) {
+  const items = workspaceCompletedItems(workspace);
+  return items ? `${items.length} 项` : '待核对';
+}
+
 function workspaceOverviewCard(workspace) {
   const route = safeWorkspaceRoutes[workspace?.id];
   if (!route) return null;
@@ -291,6 +302,7 @@ function workspaceOverviewCard(workspace) {
   card.append(dashboardElement('p', 'safe-workspace-current', workspaceValue(workspace.current, '当前工作待核对。')));
   const meta = dashboardElement('dl', 'safe-workspace-meta');
   meta.append(
+    workspaceMeta('已完成', workspaceCompletedSummary(workspace)),
     workspaceMeta('下一步', workspaceValue(workspace.next, '待核对')),
     workspaceMeta('核对时间', workspaceValue(workspace.checked_at || workspace.updated_at)),
   );
@@ -365,6 +377,37 @@ function appendWorkspaceBlockers(parent, blockers) {
   parent.append(section);
 }
 
+function appendWorkspaceCompleted(parent, workspace) {
+  const section = dashboardElement('section', 'safe-workspace-phase safe-workspace-completed');
+  section.append(dashboardElement('h3', '', '已完成'));
+  const items = workspaceCompletedItems(workspace);
+  if (!items) {
+    section.append(dashboardElement('p', 'safe-workspace-phase-empty', '暂无经核对的已完成项，待核对。'));
+    parent.append(section);
+    return;
+  }
+  const list = dashboardElement('ul', 'safe-workspace-completed-list');
+  items.forEach((item) => {
+    const row = dashboardElement('li');
+    row.append(dashboardElement('strong', '', workspaceValue(item?.label, '已完成项待核对')));
+    row.append(dashboardElement('small', '', `核对：${workspaceValue(item?.checked_at)} · 来源角色：${workspaceValue(item?.source_role_label)}`));
+    list.append(row);
+  });
+  section.append(list);
+  parent.append(section);
+}
+
+function appendWorkspaceCurrentAndNext(parent, workspace) {
+  [
+    ['进行中', workspaceValue(workspace.current, '当前工作待核对。')],
+    ['后续计划', workspaceValue(workspace.next, '后续计划待核对。')],
+  ].forEach(([title, content]) => {
+    const section = dashboardElement('section', 'safe-workspace-phase');
+    section.append(dashboardElement('h3', '', title), dashboardElement('p', '', content));
+    parent.append(section);
+  });
+}
+
 function renderSafeWorkspaceDetail(view, workspaceId) {
   const target = document.querySelector('[data-safe-workspace-detail]');
   if (!target) return;
@@ -387,14 +430,17 @@ function renderSafeWorkspaceDetail(view, workspaceId) {
   );
   target.append(header, dashboardElement('p', 'safe-workspace-owner', `负责人：${workspaceValue(workspace.owner_role_label)}`));
 
-  const activity = dashboardElement('dl', 'safe-workspace-activity');
-  activity.append(
-    workspaceMeta('当前工作', workspaceValue(workspace.current, '待核对')),
-    workspaceMeta('下一步', workspaceValue(workspace.next, '待核对')),
+  const phases = dashboardElement('div', 'safe-workspace-phase-grid');
+  appendWorkspaceCompleted(phases, workspace);
+  appendWorkspaceCurrentAndNext(phases, workspace);
+  target.append(phases);
+
+  const metadata = dashboardElement('dl', 'safe-workspace-activity');
+  metadata.append(
     workspaceMeta('关联交付线', Array.isArray(workspace.delivery_line_refs) && workspace.delivery_line_refs.length ? workspace.delivery_line_refs.join(' · ') : '待核对'),
     workspaceMeta('最近核对', workspaceValue(workspace.checked_at || workspace.updated_at)),
   );
-  target.append(activity);
+  target.append(metadata);
 
   const detailGrid = dashboardElement('div', 'safe-workspace-detail-grid');
   appendWorkspaceBlockers(detailGrid, workspace.open_blockers);

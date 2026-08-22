@@ -208,6 +208,16 @@ main { padding: 42px 0 70px; }
 .safe-workspace-link { color: var(--green); font-size: 13px; font-weight: 900; text-decoration: none; }
 .safe-workspace-link:hover { text-decoration: underline; text-underline-offset: 3px; }
 .safe-workspace-detail-heading { padding-bottom: 17px; border-bottom: 1px solid var(--line); }
+.safe-workspace-phase-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 22px; }
+.safe-workspace-phase { min-width: 0; padding: 17px; background: #f5f8f5; border-radius: 13px; }
+.safe-workspace-phase h3 { margin: 0; color: #244036; font-size: 15px; }
+.safe-workspace-phase > p { margin: 11px 0 0; color: var(--muted); font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; }
+.safe-workspace-phase-empty { color: #65736b !important; }
+.safe-workspace-completed-list { display: grid; gap: 8px; margin: 11px 0 0; padding: 0; list-style: none; }
+.safe-workspace-completed-list li { min-width: 0; padding-top: 9px; border-top: 1px solid #dce5de; }
+.safe-workspace-completed-list li:first-child { padding-top: 0; border-top: 0; }
+.safe-workspace-completed-list strong { display: block; color: #294037; font-size: 13px; line-height: 1.5; overflow-wrap: anywhere; }
+.safe-workspace-completed-list small { display: block; margin-top: 5px; color: #78837d; font-size: 11px; line-height: 1.5; overflow-wrap: anywhere; }
 .safe-workspace-activity { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 22px; margin-top: 22px; border-top: 0; }
 .safe-workspace-activity > div { grid-template-columns: 86px minmax(0, 1fr); }
 .safe-workspace-detail-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 24px; }
@@ -860,7 +870,7 @@ footer a { color: var(--green); font-weight: 700; }
   .delivery-metadata { text-align: left; }
   .delivery-verified, .delivery-origin { white-space: normal; }
   .delivery-scope-grid, .delivery-state-grid { grid-template-columns: 1fr; }
-  .safe-workspace-grid, .safe-workspace-detail-grid, .safe-workspace-activity { grid-template-columns: 1fr; }
+  .safe-workspace-grid, .safe-workspace-detail-grid, .safe-workspace-phase-grid, .safe-workspace-activity { grid-template-columns: 1fr; }
   .safe-workspace-hero { min-height: 0; padding: 30px 22px; border-radius: 18px; }
   .safe-workspace-hero h2 { font-size: clamp(31px, 10vw, 44px); }
   .safe-workspace-card-heading, .safe-workspace-detail-heading, .safe-workspace-error { align-items: flex-start; flex-direction: column; }
