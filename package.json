@@ -1,5 +1,5 @@
 {
-  "name": "training-ai-efficiency-e2e",
+  "name": "training-ai-delivery-dashboard-e2e",
   "private": true,
   "scripts": {
     "test:e2e": "playwright test"

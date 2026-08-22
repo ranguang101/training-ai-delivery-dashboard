@@ -8,7 +8,7 @@ from pathlib import Path
 
 import uvicorn
 
-from tools.project_dashboard.main import create_dashboard_app
+from tools.project_dashboard.main import DEFAULT_DASHBOARD_DATA_ROOT, create_dashboard_app
 
 LOOPBACK_NAMES = frozenset({"127.0.0.1", "localhost", "::1"})
 
@@ -40,8 +40,8 @@ def main() -> None:
     parser.add_argument(
         "--project-root",
         type=Path,
-        default=Path(__file__).resolve().parents[2],
-        help="Repository whose project-status.json, docs and reports are displayed",
+        default=DEFAULT_DASHBOARD_DATA_ROOT,
+        help="Read-only project-status fixture or project root to display",
     )
     parser.add_argument(
         "--test-fault",

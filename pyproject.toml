@@ -1,7 +1,7 @@
 [project]
-name = "training-ai-efficiency"
+name = "training-ai-delivery-dashboard"
 version = "0.1.0"
-description = "培训机构 AI 提效方案"
+description = "培训机构 AI 提效项目交付看板"
 requires-python = ">=3.11"
 dependencies = [
   "fastapi>=0.115,<1.0",
@@ -30,7 +30,7 @@ dev = [
 ]
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
+testpaths = ["tests/standalone"]
 addopts = "-q"
 
 [tool.ruff]

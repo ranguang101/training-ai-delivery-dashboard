@@ -1,0 +1,20 @@
+{
+  "runs": [
+    {
+      "run_id": "AUX-P1-TC-021-20260815-001",
+      "source_case_id": "P1-TC-021",
+      "case_version": "1.0",
+      "tool_commit": "118f23bffde97bae9c21d75c0016491308ee432b",
+      "tested_project_commit": "bc5e8a91b95ef347d1e75462f0c7218751c34de7",
+      "automation_status": "assisted_completed_pending_review",
+      "assertion_total": 11,
+      "assertion_failed": 0,
+      "manual_items_count": 2,
+      "cleanup_status": "passed",
+      "executed_at": null,
+      "review_status": "pending_testing_review",
+      "classification": "auxiliary_ui_automation",
+      "evidence_ids": ["AUTOMATION-P1-TC-021"]
+    }
+  ]
+}

@@ -1,0 +1,71 @@
+{
+  "project_name": "交付看板演示项目",
+  "last_updated": "2026-08-22T10:00:00+08:00",
+  "current_work": {
+    "title": "独立看板演示夹具",
+    "detail": "此数据仅用于验证看板启动、降级和安全投影，不代表任何产品准出。",
+    "next_checkpoint": "由测试负责人在真实项目资料上独立复验。"
+  },
+  "completed_capabilities": [],
+  "attention_items": [],
+  "recent_updates": [],
+  "delivery_lines": [
+    {
+      "id": "mvp-a-management-foundation",
+      "delivery_track": "MVP-A",
+      "name": "MVP-A · 管理运营底座",
+      "display_label": "D1 · 演示夹具",
+      "source_role": "project_owner",
+      "verified_at": "2026-08-22",
+      "evidence_level": "D1",
+      "delivery_status": "product_acceptance",
+      "summary": "演示数据：管理运营底座等待独立验收，不代表正式通过。",
+      "updated_at": "2026-08-22T10:00:00+08:00",
+      "scope_in": [{"id": "P1-min", "label": "最小账号与权限"}, {"id": "P2-min", "label": "最小学生与归属"}],
+      "scope_out": [{"id": "P3", "label": "每日记录闭环"}],
+      "contract_state": {"status": "frozen", "safe_summary": "演示契约状态。"},
+      "candidate_version": {"status": "fixed", "safe_summary": "演示候选版本。"},
+      "runtime_gate": {"status": "evidence_ready", "safe_summary": "仍需独立验收。"},
+      "evidence_links": [],
+      "open_blockers": [{"id": "DEMO-MVPA-ACCEPTANCE", "title": "等待独立验收", "status": "open", "next_action": "使用真实交付资料复验。", "updated_at": "2026-08-22", "evidence_refs": []}]
+    },
+    {
+      "id": "mvp-b-manual-daily-record",
+      "delivery_track": "MVP-B",
+      "name": "MVP-B · 人工每日学情闭环",
+      "display_label": "D1 · 演示夹具",
+      "source_role": "product",
+      "verified_at": "2026-08-22",
+      "evidence_level": "D1",
+      "delivery_status": "contract_freeze",
+      "summary": "演示数据：人工每日记录主链尚未由本演示夹具声明为可试用。",
+      "updated_at": "2026-08-22T10:00:00+08:00",
+      "scope_in": [{"id": "P3", "label": "人工记录与审核"}],
+      "scope_out": [{"id": "P4", "label": "文字 AI 增强"}],
+      "contract_state": {"status": "not_frozen", "safe_summary": "演示契约状态。"},
+      "candidate_version": {"status": "not_fixed", "safe_summary": "尚无演示候选。"},
+      "runtime_gate": {"status": "not_assessed", "safe_summary": "尚未开展运行复验。"},
+      "evidence_links": [],
+      "open_blockers": [{"id": "DEMO-MVPB-CONTRACT", "title": "等待字段级契约", "status": "open", "next_action": "在真实项目资料中冻结并复验。", "updated_at": "2026-08-22", "evidence_refs": []}]
+    },
+    {
+      "id": "mvp-b-text-ai-enhancement",
+      "delivery_track": "MVP-B",
+      "name": "MVP-B · 文字 AI 增强",
+      "display_label": "D0 · 演示夹具",
+      "source_role": "product",
+      "verified_at": "2026-08-22",
+      "evidence_level": "D0",
+      "delivery_status": "planning",
+      "summary": "演示数据：文字 AI 增强处于规划状态。",
+      "updated_at": "2026-08-22T10:00:00+08:00",
+      "scope_in": [{"id": "P4", "label": "文字整理 AI"}],
+      "scope_out": [{"id": "P5-P7", "label": "后续扩展"}],
+      "contract_state": {"status": "not_frozen", "safe_summary": "尚未冻结。"},
+      "candidate_version": {"status": "not_fixed", "safe_summary": "尚未固定。"},
+      "runtime_gate": {"status": "not_assessed", "safe_summary": "尚未评估。"},
+      "evidence_links": [],
+      "open_blockers": [{"id": "DEMO-MVPB-AI-PLAN", "title": "等待后续规划", "status": "open", "next_action": "不得以演示数据推断版本准出。", "updated_at": "2026-08-22", "evidence_refs": []}]
+    }
+  ]
+}

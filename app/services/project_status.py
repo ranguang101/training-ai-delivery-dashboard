@@ -449,6 +449,8 @@ def load_project_status(
         path = project_root / "project-status.json"
     with path.open("r", encoding="utf-8") as status_file:
         project = json.load(status_file)
+    if not isinstance(project, dict):
+        raise ValueError("project-status.json must contain an object")
     _validate_delivery_lines(project, project_root=project_root)
     for stage in project.get("stages", []):
         stage["testing"] = stage_test_summary(stage["code"], project_root=project_root)
