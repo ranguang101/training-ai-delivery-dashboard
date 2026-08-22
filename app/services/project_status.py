@@ -62,6 +62,42 @@ SOURCE_ROLE_LABELS = {
     "testing": "测试负责人",
     "project_owner": "项目负责人",
 }
+WORKSPACE_OWNER_ROLE_LABELS = {
+    "project_owner": "项目负责人",
+    "development": "服务端技术负责人",
+    "frontend": "前端开发负责人",
+    "testing": "测试负责人",
+}
+WORKSPACE_ID_VALUES = {"collaboration", "development", "frontend", "testing"}
+WORKSPACE_ITEM_KEYS = frozenset(
+    {
+        "id",
+        "display_label",
+        "owner_role",
+        "status",
+        "current",
+        "next",
+        "updated_at",
+        "checked_at",
+        "delivery_line_refs",
+        "open_blockers",
+        "evidence_refs",
+    }
+)
+WORKSPACE_EVIDENCE_REF_KEYS = frozenset({"delivery_line_id", "evidence_id"})
+WORKSPACE_STATUS_LABELS = {
+    "planning": "规划中",
+    "contract_freeze": "契约待冻结",
+    "implementation": "实施中",
+    "integration": "联调中",
+    "independent_test": "独立测试中",
+    "product_acceptance": "产品验收中",
+    "ready_for_trial": "可试用",
+}
+LOCAL_PATH_MARKER = re.compile(
+    r"(?:[A-Za-z]:[\\/]|\\\\|\bfile:|(?:^|\s)/(?:home|users|var|tmp)(?:/|$))",
+    re.IGNORECASE,
+)
 
 
 def _require_mapping(value: object, field: str) -> dict[str, Any]:
@@ -74,6 +110,14 @@ def _require_string(value: object, field: str) -> str:
     if not isinstance(value, str) or not value.strip():
         raise ValueError(f"{field} must be a non-empty string")
     return value
+
+
+def _require_safe_display_text(value: object, field: str) -> str:
+    """Allow a short management summary, never a path or raw diagnostic."""
+    text = _require_string(value, field)
+    if len(text) > 500 or LOCAL_PATH_MARKER.search(text):
+        raise ValueError(f"{field} must be a safe management summary")
+    return text
 
 
 def _reject_undeclared_fields(
@@ -361,6 +405,146 @@ def _safe_evidence_item(line_id: str, evidence: dict[str, Any]) -> dict[str, Any
     }
 
 
+def _validate_safe_workspaces(project: dict[str, Any], *, project_root: Path) -> None:
+    """Validate the optional closed schema used by standalone workspaces.
+
+    The source status document may contain historical role and handoff material,
+    but standalone workspace pages never project it.  They accept only the
+    purpose-built ``safe_workspaces`` slice below.
+    """
+    workspaces = project.get("safe_workspaces")
+    if workspaces is None:
+        return
+    if not isinstance(workspaces, list):
+        raise ValueError("safe_workspaces must be an array")
+
+    _validate_delivery_lines(project, project_root=project_root)
+    lines = {
+        line["id"]: line
+        for line in project.get("delivery_lines", [])
+        if isinstance(line, dict)
+    }
+    seen_ids: set[str] = set()
+    for index, item in enumerate(workspaces):
+        field = f"safe_workspaces[{index}]"
+        workspace = _require_mapping(item, field)
+        _reject_undeclared_fields(workspace, field, WORKSPACE_ITEM_KEYS)
+        workspace_id = _require_string(workspace.get("id"), f"{field}.id")
+        if workspace_id not in WORKSPACE_ID_VALUES or workspace_id in seen_ids:
+            raise ValueError(f"{field}.id is not supported or duplicated")
+        seen_ids.add(workspace_id)
+        _require_safe_display_text(workspace.get("display_label"), f"{field}.display_label")
+        owner_role = _require_string(workspace.get("owner_role"), f"{field}.owner_role")
+        if owner_role not in WORKSPACE_OWNER_ROLE_LABELS:
+            raise ValueError(f"{field}.owner_role is not supported")
+        if workspace.get("status") not in DELIVERY_LINE_STATUS_VALUES:
+            raise ValueError(f"{field}.status is not supported")
+        for name in ("current", "next", "updated_at", "checked_at"):
+            value = workspace.get(name)
+            if value is not None:
+                _require_safe_display_text(value, f"{field}.{name}")
+
+        line_refs = workspace.get("delivery_line_refs")
+        if not isinstance(line_refs, list) or not line_refs:
+            raise ValueError(f"{field}.delivery_line_refs must be a non-empty array")
+        if not all(isinstance(ref, str) and ref in lines for ref in line_refs):
+            raise ValueError(f"{field}.delivery_line_refs must reference delivery_lines")
+
+        evidence_refs = workspace.get("evidence_refs")
+        if not isinstance(evidence_refs, list):
+            raise ValueError(f"{field}.evidence_refs must be an array")
+        available_evidence_ids: set[str] = set()
+        for evidence_index, evidence_ref in enumerate(evidence_refs):
+            evidence_field = f"{field}.evidence_refs[{evidence_index}]"
+            reference = _require_mapping(evidence_ref, evidence_field)
+            _reject_undeclared_fields(reference, evidence_field, WORKSPACE_EVIDENCE_REF_KEYS)
+            line_id = _require_string(
+                reference.get("delivery_line_id"), f"{evidence_field}.delivery_line_id"
+            )
+            evidence_id = _require_string(
+                reference.get("evidence_id"), f"{evidence_field}.evidence_id"
+            )
+            line = lines.get(line_id)
+            if line is None or line_id not in line_refs:
+                raise ValueError(f"{evidence_field} must reference a workspace delivery line")
+            if evidence_id not in {
+                evidence["id"]
+                for evidence in line.get("evidence_links", [])
+                if isinstance(evidence, dict)
+            }:
+                raise ValueError(f"{evidence_field} must reference controlled evidence")
+            available_evidence_ids.add(evidence_id)
+
+        blockers = workspace.get("open_blockers")
+        if not isinstance(blockers, list):
+            raise ValueError(f"{field}.open_blockers must be an array")
+        for blocker_index, blocker_item in enumerate(blockers):
+            blocker_field = f"{field}.open_blockers[{blocker_index}]"
+            blocker = _require_mapping(blocker_item, blocker_field)
+            _reject_undeclared_fields(blocker, blocker_field, OPEN_BLOCKER_KEYS)
+            for name in ("id", "title", "status", "next_action", "updated_at"):
+                _require_safe_display_text(blocker.get(name), f"{blocker_field}.{name}")
+            references = blocker.get("evidence_refs", [])
+            if not isinstance(references, list) or not set(references) <= available_evidence_ids:
+                raise ValueError(f"{blocker_field}.evidence_refs must reference workspace evidence")
+
+
+def build_workspace_dashboard_view(
+    project: dict[str, Any], *, project_root: Path = PROJECT_ROOT
+) -> dict[str, Any]:
+    """Return the safe management-only workspace projection.
+
+    Each workspace is declared once in the closed ``safe_workspaces`` schema.
+    Evidence is reused from a referenced delivery line so the browser receives
+    only the existing controlled evidence endpoint, never a raw URL or path.
+    """
+    _validate_safe_workspaces(project, project_root=project_root)
+    workspaces = project.get("safe_workspaces")
+    if not workspaces:
+        return {"schema_version": 1, "workspaces": []}
+
+    lines = {
+        line["id"]: line
+        for line in project.get("delivery_lines", [])
+        if isinstance(line, dict)
+    }
+    safe_workspaces: list[dict[str, Any]] = []
+    for workspace in workspaces:
+        assert isinstance(workspace, dict)
+        safe_evidence = []
+        for reference in workspace["evidence_refs"]:
+            assert isinstance(reference, dict)
+            line = lines[reference["delivery_line_id"]]
+            evidence = next(
+                item
+                for item in line["evidence_links"]
+                if isinstance(item, dict) and item["id"] == reference["evidence_id"]
+            )
+            safe_evidence.append(_safe_evidence_item(line["id"], evidence))
+        safe_workspaces.append(
+            {
+                "id": workspace["id"],
+                "display_label": workspace["display_label"],
+                "owner_role": workspace["owner_role"],
+                "owner_role_label": WORKSPACE_OWNER_ROLE_LABELS[workspace["owner_role"]],
+                "status": workspace["status"],
+                "status_label": WORKSPACE_STATUS_LABELS[workspace["status"]],
+                "current": workspace.get("current"),
+                "next": workspace.get("next"),
+                "updated_at": workspace.get("updated_at"),
+                "checked_at": workspace.get("checked_at"),
+                "delivery_line_refs": list(workspace["delivery_line_refs"]),
+                "open_blockers": [
+                    _project_open_blocker(blocker)
+                    for blocker in workspace["open_blockers"]
+                    if isinstance(blocker, dict)
+                ],
+                "evidence_links": safe_evidence,
+            }
+        )
+    return {"schema_version": 1, "workspaces": safe_workspaces}
+
+
 def _project_scope_item(item: dict[str, Any]) -> dict[str, Any]:
     return {"id": item["id"], "label": item["label"]}
 
@@ -452,6 +636,7 @@ def load_project_status(
     if not isinstance(project, dict):
         raise ValueError("project-status.json must contain an object")
     _validate_delivery_lines(project, project_root=project_root)
+    _validate_safe_workspaces(project, project_root=project_root)
     for stage in project.get("stages", []):
         stage["testing"] = stage_test_summary(stage["code"], project_root=project_root)
     return project

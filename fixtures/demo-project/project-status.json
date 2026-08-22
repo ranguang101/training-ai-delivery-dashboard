@@ -67,5 +67,59 @@
       "evidence_links": [],
       "open_blockers": [{"id": "DEMO-MVPB-AI-PLAN", "title": "等待后续规划", "status": "open", "next_action": "不得以演示数据推断版本准出。", "updated_at": "2026-08-22", "evidence_refs": []}]
     }
+  ],
+  "safe_workspaces": [
+    {
+      "id": "collaboration",
+      "display_label": "协作总览",
+      "owner_role": "project_owner",
+      "status": "integration",
+      "current": "以交付线汇总跨角色依赖，演示数据不代表实际角色结论。",
+      "next": "由负责人确认各交付线的真实证据后更新摘要。",
+      "updated_at": "2026-08-22T10:00:00+08:00",
+      "checked_at": "2026-08-22",
+      "delivery_line_refs": ["mvp-a-management-foundation", "mvp-b-manual-daily-record", "mvp-b-text-ai-enhancement"],
+      "open_blockers": [{"id": "DEMO-COLLAB-001", "title": "等待真实交付资料", "status": "open", "next_action": "仅以受控证据更新跨角色协作摘要。", "updated_at": "2026-08-22", "evidence_refs": []}],
+      "evidence_refs": []
+    },
+    {
+      "id": "development",
+      "display_label": "服务端工作区",
+      "owner_role": "development",
+      "status": "implementation",
+      "current": "维护独立看板的安全投影与只读接口。",
+      "next": "固定安全工作区接口后交由前端接入。",
+      "updated_at": "2026-08-22T10:00:00+08:00",
+      "checked_at": "2026-08-22",
+      "delivery_line_refs": ["mvp-a-management-foundation", "mvp-b-manual-daily-record"],
+      "open_blockers": [{"id": "DEMO-DEV-001", "title": "等待独立验收", "status": "open", "next_action": "使用真实项目资料完成独立复验。", "updated_at": "2026-08-22", "evidence_refs": []}],
+      "evidence_refs": []
+    },
+    {
+      "id": "frontend",
+      "display_label": "前端工作区",
+      "owner_role": "frontend",
+      "status": "implementation",
+      "current": "准备以受控工作区接口实现统一导航与页面。",
+      "next": "在固定服务端候选上完成页面联调。",
+      "updated_at": "2026-08-22T10:00:00+08:00",
+      "checked_at": "2026-08-22",
+      "delivery_line_refs": ["mvp-a-management-foundation", "mvp-b-manual-daily-record", "mvp-b-text-ai-enhancement"],
+      "open_blockers": [{"id": "DEMO-FE-001", "title": "等待安全接口候选", "status": "open", "next_action": "仅消费固定的安全摘要接口。", "updated_at": "2026-08-22", "evidence_refs": []}],
+      "evidence_refs": []
+    },
+    {
+      "id": "testing",
+      "display_label": "质量工作区",
+      "owner_role": "testing",
+      "status": "independent_test",
+      "current": "展示受控测试摘要与辅助自动化边界。",
+      "next": "测试负责人独立复验工作区组合候选。",
+      "updated_at": "2026-08-22T10:00:00+08:00",
+      "checked_at": "2026-08-22",
+      "delivery_line_refs": ["mvp-a-management-foundation", "mvp-b-manual-daily-record"],
+      "open_blockers": [{"id": "DEMO-QA-001", "title": "等待组合候选", "status": "open", "next_action": "独立执行接口和浏览器验收。", "updated_at": "2026-08-22", "evidence_refs": []}],
+      "evidence_refs": []
+    }
   ]
 }

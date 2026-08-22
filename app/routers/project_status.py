@@ -21,6 +21,7 @@ from app.services.document_catalog import (
 )
 from app.services.project_status import (
     build_delivery_dashboard_view,
+    build_workspace_dashboard_view,
     load_delivery_evidence_view,
     load_project_status,
     load_stage,
@@ -343,6 +344,29 @@ def project_delivery_dashboard_data(request: Request) -> dict:
                 "warnings": [
                     "交付线数据暂时无法通过完整性校验，已安全降级；"
                     "请由负责人核对 project-status.json 后再刷新。"
+                ],
+            },
+        }
+    return {"success": True, "data": view}
+
+
+@router.get("/api/v1/project-status/dashboard/workspaces", include_in_schema=False)
+def project_workspace_dashboard_data(request: Request) -> dict:
+    """Return only the closed, management-safe workspace projection."""
+    ensure_project_status_enabled()
+    root = _request_project_root(request)
+    try:
+        project = load_project_status(project_root=root) if root else load_project_status()
+        view = build_workspace_dashboard_view(project, project_root=root or PROJECT_ROOT)
+    except PROJECT_STATUS_LOAD_ERRORS:
+        return {
+            "success": True,
+            "data": {
+                "schema_version": 1,
+                "workspaces": [],
+                "warnings": [
+                    "工作区摘要暂时无法通过完整性校验，已安全降级；"
+                    "当前未显示任何工作区状态。"
                 ],
             },
         }
