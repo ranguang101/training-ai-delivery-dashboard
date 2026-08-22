@@ -59,6 +59,7 @@ EVIDENCE_LEVEL_RANK = {f"D{level}": level for level in range(7)}
 SOURCE_ROLE_LABELS = {
     "product": "产品负责人",
     "development": "服务端技术负责人",
+    "frontend": "前端开发负责人",
     "testing": "测试负责人",
     "project_owner": "项目负责人",
 }
@@ -77,6 +78,7 @@ WORKSPACE_ITEM_KEYS = frozenset(
         "status",
         "current",
         "next",
+        "completed_items",
         "updated_at",
         "checked_at",
         "delivery_line_refs",
@@ -85,6 +87,9 @@ WORKSPACE_ITEM_KEYS = frozenset(
     }
 )
 WORKSPACE_EVIDENCE_REF_KEYS = frozenset({"delivery_line_id", "evidence_id"})
+WORKSPACE_COMPLETED_ITEM_KEYS = frozenset(
+    {"id", "label", "checked_at", "source_role", "evidence_refs"}
+)
 WORKSPACE_STATUS_LABELS = {
     "planning": "规划中",
     "contract_freeze": "契约待冻结",
@@ -475,6 +480,40 @@ def _validate_safe_workspaces(project: dict[str, Any], *, project_root: Path) ->
                 raise ValueError(f"{evidence_field} must reference controlled evidence")
             available_evidence_ids.add(evidence_id)
 
+        completed_items = workspace.get("completed_items", [])
+        if not isinstance(completed_items, list):
+            raise ValueError(f"{field}.completed_items must be an array")
+        completed_ids: set[str] = set()
+        for completed_index, completed_item in enumerate(completed_items):
+            completed_field = f"{field}.completed_items[{completed_index}]"
+            completed = _require_mapping(completed_item, completed_field)
+            _reject_undeclared_fields(
+                completed, completed_field, WORKSPACE_COMPLETED_ITEM_KEYS
+            )
+            completed_id = _require_string(completed.get("id"), f"{completed_field}.id")
+            if (
+                not SAFE_REFERENCE_PATTERN.fullmatch(completed_id)
+                or completed_id in completed_ids
+            ):
+                raise ValueError(f"{completed_field}.id is not a safe reference")
+            completed_ids.add(completed_id)
+            _require_safe_display_text(completed.get("label"), f"{completed_field}.label")
+            _require_safe_display_text(
+                completed.get("checked_at"), f"{completed_field}.checked_at"
+            )
+            _validate_source_role(
+                completed.get("source_role"), f"{completed_field}.source_role"
+            )
+            references = completed.get("evidence_refs", [])
+            if not isinstance(references, list) or not all(
+                isinstance(reference, str) for reference in references
+            ):
+                raise ValueError(f"{completed_field}.evidence_refs must be an array")
+            if not set(references) <= available_evidence_ids:
+                raise ValueError(
+                    f"{completed_field}.evidence_refs must reference workspace evidence"
+                )
+
         blockers = workspace.get("open_blockers")
         if not isinstance(blockers, list):
             raise ValueError(f"{field}.open_blockers must be an array")
@@ -531,6 +570,18 @@ def build_workspace_dashboard_view(
                 "status_label": WORKSPACE_STATUS_LABELS[workspace["status"]],
                 "current": workspace.get("current"),
                 "next": workspace.get("next"),
+                "completed_items": [
+                    {
+                        "id": item["id"],
+                        "label": item["label"],
+                        "checked_at": item["checked_at"],
+                        "source_role": item["source_role"],
+                        "source_role_label": SOURCE_ROLE_LABELS[item["source_role"]],
+                        "evidence_refs": list(item.get("evidence_refs", [])),
+                    }
+                    for item in workspace.get("completed_items", [])
+                    if isinstance(item, dict)
+                ],
                 "updated_at": workspace.get("updated_at"),
                 "checked_at": workspace.get("checked_at"),
                 "delivery_line_refs": list(workspace["delivery_line_refs"]),
