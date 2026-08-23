@@ -21,6 +21,11 @@ from app.services.delivery_monitor import (
     build_r3_workspace_view,
     load_r3_evidence_detail,
 )
+from app.services.quality_lifecycle import (
+    QualityLifecycleNotFound,
+    build_quality_requirement_detail,
+    build_quality_requirement_overview,
+)
 
 router = APIRouter(tags=["project-status"])
 templates = Jinja2Templates(directory=str(PROJECT_ROOT / "app" / "templates"))
@@ -94,9 +99,7 @@ def sync_project_status(request: Request) -> dict:
     "/api/v1/project-status/dashboard/r3/workspaces/{workspace_id}",
     include_in_schema=False,
 )
-def r3_workspace_data(
-    workspace_id: str, request: Request, line: str | None = None
-) -> dict:
+def r3_workspace_data(workspace_id: str, request: Request, line: str | None = None) -> dict:
     _ensure_enabled()
     if workspace_id not in WORKSPACE_ID_VALUES:
         raise HTTPException(status_code=404, detail="R3_WORKSPACE_NOT_FOUND")
@@ -126,6 +129,46 @@ def r3_evidence_data(evidence_type: str, evidence_id: str, request: Request) -> 
         )
     except KeyError as exc:
         raise HTTPException(status_code=404, detail="R3_EVIDENCE_NOT_FOUND") from exc
+    return {"success": True, "data": data}
+
+
+@router.get(
+    "/api/v1/project-status/quality-requirements",
+    include_in_schema=False,
+)
+def quality_requirement_overview(
+    request: Request, requirement: str | None = None, line: str | None = None
+) -> dict:
+    """R4 quality lifecycle overview: only registered, safe structured fields."""
+    _ensure_enabled()
+    try:
+        data = build_quality_requirement_overview(
+            project_root=_project_root(request),
+            requirement_id=requirement,
+            line_id=line,
+        )
+    except QualityLifecycleNotFound as exc:
+        raise HTTPException(status_code=404, detail="QUALITY_REQUIREMENT_NOT_FOUND") from exc
+    return {"success": True, "data": data}
+
+
+@router.get(
+    "/api/v1/project-status/quality-requirements/{quality_requirement_id}",
+    include_in_schema=False,
+)
+def quality_requirement_detail(
+    quality_requirement_id: str, request: Request, line: str | None = None
+) -> dict:
+    """R4 safe detail projection; raw reports, logs and paths stay unavailable."""
+    _ensure_enabled()
+    try:
+        data = build_quality_requirement_detail(
+            quality_requirement_id,
+            project_root=_project_root(request),
+            line_id=line,
+        )
+    except QualityLifecycleNotFound as exc:
+        raise HTTPException(status_code=404, detail="QUALITY_REQUIREMENT_NOT_FOUND") from exc
     return {"success": True, "data": data}
 
 

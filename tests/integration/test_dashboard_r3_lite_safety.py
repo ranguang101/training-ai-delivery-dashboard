@@ -327,4 +327,4 @@ def test_legacy_dashboard_endpoint_is_removed_from_r3(tmp_path) -> None:
     with _client(tmp_path, dashboard_r3) as client:
         legacy = client.get("/api/v1/project-status/dashboard")
         assert legacy.status_code == 404
-        assert "FACT-A-1" not in json.dumps(legacy, ensure_ascii=False)
+        assert "FACT-A-1" not in legacy.text

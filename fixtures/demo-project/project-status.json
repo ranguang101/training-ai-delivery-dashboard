@@ -550,5 +550,128 @@
         "startup_handoff_ref": "HO-PD-013"
       }
     ]
+  },
+  "quality_workspace_r4": {
+    "requirements": [
+      {
+        "quality_requirement_id": "QR-MVP-A",
+        "delivery_line_id": "mvp-a-management-foundation",
+        "name": "MVP-A 管理运营底座",
+        "sort_order": 1,
+        "status": "ready_for_product_acceptance",
+        "scope_summary": "P1/P2 管理运营底座的正式测试生命周期演示映射。",
+        "candidate_ref": "MVP-A-44c8ff4",
+        "candidate_status": "fixed",
+        "prd_refs": ["MVP-A-SPEC-V1"],
+        "feature_refs": ["P1-ACCOUNT", "P2-ASSIGNMENT"],
+        "case_refs": ["MVP-A-TC-001", "MVP-A-TC-002"],
+        "automation_refs": ["AUX-MVP-A-001"],
+        "defect_refs": ["BUG-MVP-A-001"],
+        "report_refs": ["RUN-MVP-A-20260812-001000"],
+        "verified_at": "2026-08-22T10:00:00+08:00"
+      },
+      {
+        "quality_requirement_id": "QR-MVP-B-MANUAL",
+        "delivery_line_id": "mvp-b-manual-daily-record",
+        "name": "MVP-B 人工每日学情闭环",
+        "sort_order": 2,
+        "status": "ready_for_product_acceptance",
+        "scope_summary": "P3 人工记录、提交、审核与更正的正式测试生命周期演示映射。",
+        "candidate_ref": "MVP-B-9e38e599",
+        "candidate_status": "fixed",
+        "prd_refs": ["MVP-B-MANUAL-SPEC-V1"],
+        "feature_refs": ["P3-RECORD", "P3-REVIEW"],
+        "case_refs": ["MVP-B-TC-001", "MVP-B-TC-002"],
+        "automation_refs": ["AUX-MVP-B-001"],
+        "defect_refs": ["BUG-MVP-B-001"],
+        "report_refs": ["RUN-MVP-B-20260813-001000"],
+        "verified_at": "2026-08-22T10:00:00+08:00"
+      },
+      {
+        "quality_requirement_id": "QR-MVP-B-TEXT-AI",
+        "delivery_line_id": "mvp-b-text-ai-enhancement",
+        "name": "MVP-B 文字学情 AI 增强",
+        "sort_order": 3,
+        "status": "designing",
+        "scope_summary": "P4 文字学情整理 AI 的测试设计准备，尚未形成正式测试报告。",
+        "candidate_ref": "PENDING",
+        "candidate_status": "pending",
+        "prd_refs": ["P4-TEXT-AI-SPEC-V1"],
+        "feature_refs": ["P4-CANDIDATE"],
+        "case_refs": [],
+        "automation_refs": [],
+        "defect_refs": [],
+        "report_refs": [],
+        "verified_at": "2026-08-22T10:00:00+08:00"
+      }
+    ],
+    "formal_cases": [
+      {
+        "case_id": "MVP-A-TC-001",
+        "quality_requirement_id": "QR-MVP-A",
+        "requirement_ids": ["P1-ACC-001"],
+        "feature_ids": ["P1-ACCOUNT"],
+        "title": "账号与角色权限主链",
+        "case_type": "functional",
+        "automation_kind": "hybrid",
+        "preconditions": "演示角色夹具已准备。",
+        "steps": "完成账号创建、登录和权限投影。",
+        "expected_result": "角色边界与安全提示符合受控预期。"
+      },
+      {
+        "case_id": "MVP-A-TC-002",
+        "quality_requirement_id": "QR-MVP-A",
+        "requirement_ids": ["P2-ASSIGN-001"],
+        "feature_ids": ["P2-ASSIGNMENT"],
+        "title": "学生归属管理主链",
+        "case_type": "integration",
+        "automation_kind": "automated",
+        "preconditions": "演示机构与教师归属夹具已准备。",
+        "steps": "完成学生归属创建、转移和历史查看。",
+        "expected_result": "归属、权限和审计摘要保持一致。"
+      },
+      {
+        "case_id": "MVP-B-TC-001",
+        "quality_requirement_id": "QR-MVP-B-MANUAL",
+        "requirement_ids": ["P3-REC-001"],
+        "feature_ids": ["P3-RECORD"],
+        "title": "教师每日记录保存与提交",
+        "case_type": "functional",
+        "automation_kind": "hybrid",
+        "preconditions": "演示教师、学生与日期夹具已准备。",
+        "steps": "保存草稿并提交当日记录。",
+        "expected_result": "记录版本和提交状态正确。"
+      },
+      {
+        "case_id": "MVP-B-TC-002",
+        "quality_requirement_id": "QR-MVP-B-MANUAL",
+        "requirement_ids": ["P3-REV-001"],
+        "feature_ids": ["P3-REVIEW"],
+        "title": "管理员审核、退回与更正",
+        "case_type": "regression",
+        "automation_kind": "manual",
+        "preconditions": "已有可审核的演示记录。",
+        "steps": "审核、退回并查看更正版本。",
+        "expected_result": "审核链路可追溯且状态正确。"
+      }
+    ],
+    "case_executions": [
+      {"case_id": "MVP-A-TC-001", "run_id": "RUN-MVP-A-20260812-001000", "execution_status": "passed", "executed_at": "2026-08-22T09:00:00+08:00", "candidate_ref": "MVP-A-44c8ff4"},
+      {"case_id": "MVP-A-TC-002", "run_id": "RUN-MVP-A-20260812-001000", "execution_status": "passed", "executed_at": "2026-08-22T09:00:00+08:00", "candidate_ref": "MVP-A-44c8ff4"},
+      {"case_id": "MVP-B-TC-001", "run_id": "RUN-MVP-B-20260813-001000", "execution_status": "passed", "executed_at": "2026-08-22T09:00:00+08:00", "candidate_ref": "MVP-B-9e38e599"},
+      {"case_id": "MVP-B-TC-002", "run_id": "RUN-MVP-B-20260813-001000", "execution_status": "passed", "executed_at": "2026-08-22T09:00:00+08:00", "candidate_ref": "MVP-B-9e38e599"}
+    ],
+    "automation_runs": [
+      {"automation_run_id": "AUX-MVP-A-001", "quality_requirement_id": "QR-MVP-A", "case_ids": ["MVP-A-TC-002"], "feature_ids": ["P2-ASSIGNMENT"], "automation_status": "reviewed", "assertion_total": 12, "assertion_failed": 0, "screenshot_registered": true, "log_summary_registered": true, "executed_at": "2026-08-22T09:00:00+08:00", "human_reviewed_at": "2026-08-22T10:00:00+08:00", "safe_summary": "辅助浏览器检查已登记并由测试负责人确认其辅助边界。"},
+      {"automation_run_id": "AUX-MVP-B-001", "quality_requirement_id": "QR-MVP-B-MANUAL", "case_ids": ["MVP-B-TC-001"], "feature_ids": ["P3-RECORD"], "automation_status": "passed_pending_human", "assertion_total": 18, "assertion_failed": 0, "screenshot_registered": true, "log_summary_registered": true, "executed_at": "2026-08-22T09:00:00+08:00", "human_reviewed_at": null, "safe_summary": "辅助浏览器断言通过，仍待测试负责人确认。"}
+    ],
+    "defects": [
+      {"defect_id": "BUG-MVP-A-001", "quality_requirement_id": "QR-MVP-A", "jira_issue_key": null, "severity": "low", "status": "closed", "case_ids": ["MVP-A-TC-001"], "report_ids": ["RUN-MVP-A-20260812-001000"], "candidate_ref": "MVP-A-44c8ff4", "retest_status": "复测通过", "safe_summary": "演示缺陷已关闭。"},
+      {"defect_id": "BUG-MVP-B-001", "quality_requirement_id": "QR-MVP-B-MANUAL", "jira_issue_key": "DEMO-101", "severity": "high", "status": "closed", "case_ids": ["MVP-B-TC-002"], "report_ids": ["RUN-MVP-B-20260813-001000"], "candidate_ref": "MVP-B-9e38e599", "retest_status": "复测通过", "safe_summary": "演示高优先级缺陷已关闭。"}
+    ],
+    "final_reports": [
+      {"report_id": "RUN-MVP-A-20260812-001000", "quality_requirement_id": "QR-MVP-A", "candidate_ref": "MVP-A-44c8ff4", "scope_summary": "P1/P2 管理运营底座独立测试范围。", "conclusion": "独立测试通过；仅具备进入产品验收前提。", "report_status": "passed", "verified_at": "2026-08-22T10:00:00+08:00"},
+      {"report_id": "RUN-MVP-B-20260813-001000", "quality_requirement_id": "QR-MVP-B-MANUAL", "candidate_ref": "MVP-B-9e38e599", "scope_summary": "P3 人工每日记录闭环独立测试范围。", "conclusion": "独立测试通过；仅具备进入产品验收前提。", "report_status": "passed", "verified_at": "2026-08-22T10:00:00+08:00"}
+    ]
   }
 }
