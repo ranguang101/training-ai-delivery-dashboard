@@ -43,18 +43,13 @@ def main() -> None:
         default=DEFAULT_DASHBOARD_DATA_ROOT,
         help="Read-only project-status fixture or project root to display",
     )
-    parser.add_argument(
-        "--test-fault",
-        choices=["dashboard_404"],
-        help="Independent dashboard QA only; never use for normal operator startup.",
-    )
     args = parser.parse_args()
     try:
         host = resolve_loopback_host(args.host)
     except ValueError as exc:
         parser.error(str(exc))
     uvicorn.run(
-        create_dashboard_app(args.project_root, dashboard_test_fault=args.test_fault),
+        create_dashboard_app(args.project_root),
         host=host,
         port=args.port,
     )

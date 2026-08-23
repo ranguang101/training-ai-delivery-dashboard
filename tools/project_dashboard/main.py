@@ -29,8 +29,6 @@ DEFAULT_DASHBOARD_DATA_ROOT = DASHBOARD_CODE_ROOT / "fixtures" / "demo-project"
 
 def create_dashboard_app(
     project_root: Path | None = None,
-    *,
-    dashboard_test_fault: str | None = None,
 ) -> FastAPI:
     """Create the local-only dashboard without business lifecycle hooks."""
     # The dashboard executable owns its templates and static assets.  The
@@ -46,7 +44,6 @@ def create_dashboard_app(
     )
     app.state.dashboard_project_root = root
     app.state.dashboard_mode = "read_only_local"
-    app.state.dashboard_test_fault = dashboard_test_fault
     app.state.project_status_templates = Jinja2Templates(
         directory=str(DASHBOARD_CODE_ROOT / "app" / "templates")
     )

@@ -14,20 +14,15 @@
 
 业务系统未来继续使用 8000 端口；管理面板固定使用本机 8010 端口。若状态资料位于其他项目目录，启动时显式传入 `--project-root`。
 
-启动后先检查安全交付数据接口：
+启动后先检查 R3 工作区安全投影：
 
 ```powershell
-Invoke-WebRequest http://127.0.0.1:8010/api/v1/project-status/dashboard -UseBasicParsing
+Invoke-WebRequest http://127.0.0.1:8010/api/v1/project-status/dashboard/r3/workspaces/collaboration -UseBasicParsing
 ```
 
-预期 HTTP 200 且响应中包含 `data.delivery_lines`。如果返回 404，说明 8010
+预期 HTTP 200 且响应中包含 `data.cards`。如果返回 404，说明 8010
 仍在运行旧管理面板进程；不要处理 8000 业务服务，也不要修改数据库或迁移。由
 操作者关闭旧的**管理面板**进程后，再使用上面的命令从当前源码重新启动。
 
-独立测试 404 降级时，使用另一个端口启动受控故障实例：
-
-```powershell
-.\.venv\Scripts\python.exe -m tools.project_dashboard.run --port 8012 --test-fault dashboard_404
-```
-
-此参数默认关闭；它只影响独立管理面板的安全投影路由，不影响业务服务或数据。
+旧的 R2 交付线、原始文档/报告、Case 设计与辅助自动化详情入口均已从独立看板移除；
+它们不会通过本仓库重新暴露。

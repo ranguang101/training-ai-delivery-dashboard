@@ -23,11 +23,60 @@ from typing import Any
 
 from app.core.config import PROJECT_ROOT
 from app.services.document_catalog import build_document_catalog
-from app.services.test_management import (
-    _is_valid_test_run,
-    load_case_design_task,
-    load_defects,
-)
+
+
+def _is_valid_test_run(payload: Any) -> bool:
+    """Validate the minimal, controlled test-run summary shape used by R3."""
+    if not isinstance(payload, dict):
+        return False
+    if not re.fullmatch(r"RUN-P[0-8]-\d{8}-\d{6}", str(payload.get("id", ""))):
+        return False
+    if payload.get("git_dirty") is True or payload.get("code_version") == "UNCOMMITTED":
+        return False
+    counts = payload.get("counts")
+    if not isinstance(payload.get("stage"), str) or not isinstance(counts, dict):
+        return False
+    for key in (
+        "executed",
+        "passed",
+        "failed",
+        "blocked",
+        "not_executed",
+        "automation_pending",
+        "deferred",
+        "manual_pending",
+        "blocking_pending",
+    ):
+        value = counts.get(key)
+        if value is not None and (
+            isinstance(value, bool) or not isinstance(value, int) or value < 0
+        ):
+            return False
+    executed, passed, failed, blocked = (
+        counts.get("executed"),
+        counts.get("passed"),
+        counts.get("failed"),
+        counts.get("blocked"),
+    )
+    if all(isinstance(value, int) for value in (executed, passed, failed, blocked)):
+        if executed != passed + failed + blocked:
+            return False
+    results = payload.get("case_results")
+    return isinstance(results, list) and all(
+        isinstance(item, dict)
+        and isinstance(item.get("case_id"), str)
+        and item.get("status")
+        in {
+            "passed",
+            "failed",
+            "blocked",
+            "not_executed",
+            "manual_pending",
+            "automation_pending",
+            "deferred",
+        }
+        for item in results
+    )
 
 R3_SECTION_KEY = "dashboard_r3"
 R3_SECTION_KEYS = frozenset(
@@ -303,10 +352,17 @@ def _handoff_asset_resolves(handoff_id: str, project_root: Path) -> bool:
 
 def _defect_asset_resolves(defect_id: str, project_root: Path) -> bool:
     try:
-        defects = load_defects(project_root=project_root)
+        payload = json.loads(
+            (project_root / "docs" / "testing" / "defects.json").read_text(
+                encoding="utf-8"
+            )
+        )
     except (OSError, json.JSONDecodeError, UnicodeDecodeError):
         return False
-    return any(item.get("id") == defect_id for item in defects)
+    defects = payload.get("defects") if isinstance(payload, dict) else None
+    return isinstance(defects, list) and any(
+        isinstance(item, dict) and item.get("id") == defect_id for item in defects
+    )
 
 
 def _document_asset_resolves(document_id: str, project_root: Path) -> bool:
@@ -319,10 +375,23 @@ def _document_asset_resolves(document_id: str, project_root: Path) -> bool:
 
 def _case_design_asset_resolves(task_id: str, project_root: Path) -> bool:
     try:
-        load_case_design_task(task_id, project_root=project_root)
-    except KeyError:
+        payload = json.loads(
+            (
+                project_root
+                / "docs"
+                / "testing"
+                / "case-generation"
+                / "case-generation-runs.json"
+            ).read_text(encoding="utf-8")
+        )
+    except (OSError, json.JSONDecodeError, UnicodeDecodeError):
         return False
-    return True
+    tasks = payload.get("tasks") if isinstance(payload, dict) else None
+    return isinstance(tasks, list) and any(
+        isinstance(item, dict)
+        and (item.get("id") == task_id or item.get("task_id") == task_id)
+        for item in tasks
+    )
 
 
 def _technical_review_asset_resolves(review_id: str, project_root: Path) -> bool:

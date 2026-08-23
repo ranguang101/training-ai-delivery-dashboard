@@ -93,10 +93,13 @@ test('line filter is kept on refresh, workspace switch, and overview return focu
   await expect(page.locator('[data-r3-card="conclusion"]')).not.toContainText('MVP-A 管理运营底座');
 
   await page.getByRole('link', { name: '返回项目总览' }).first().click();
-  await expect(page).toHaveURL(/\/project-status[?&]line=mvp-b-manual-daily-record/);
-  const focusedCard = page.locator('#delivery-line-mvp-b-manual-daily-record');
-  await expect(focusedCard).toHaveClass(/r3-line-focused/);
-  await expect(focusedCard).toBeInViewport();
+  await expect(page).toHaveURL(
+    /\/project-status\/workspaces[?&]line=mvp-b-manual-daily-record/,
+  );
+  await expect(page.locator('#r3-line-select')).toHaveValue('mvp-b-manual-daily-record');
+  await expect(page.locator('[data-r3-card="conclusion"]')).toContainText(
+    'MVP-B v0.1 人工每日记录闭环',
+  );
 });
 
 test('all three delivery lines keep their filter across all four pages', async ({ page }) => {
@@ -207,9 +210,10 @@ test('empty projection shows the fixed empty state on every card', async ({ page
 
 test('top navigation keeps the line filter from overview and workspace pages', async ({ page }) => {
   await page.goto('/project-status?line=mvp-b-manual-daily-record');
-  await expect(page.locator('#delivery-line-mvp-b-manual-daily-record')).toHaveClass(
-    /r3-line-focused/,
+  await expect(page).toHaveURL(
+    /\/project-status\/workspaces[?&]line=mvp-b-manual-daily-record/,
   );
+  await expect(page.locator('#r3-line-select')).toHaveValue('mvp-b-manual-daily-record');
   const primaryNav = page.getByRole('navigation', { name: '项目一级导航' });
   await expect(primaryNav.getByRole('link', { name: '工作区' })).toHaveAttribute(
     'href',

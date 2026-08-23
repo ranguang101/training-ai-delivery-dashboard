@@ -15,8 +15,6 @@ def make_panel_root(
     *,
     project_status: dict | None = None,
     with_templates: bool = False,
-    template_marker: str | None = None,
-    static_marker: str | None = None,
 ) -> Path:
     """Build a minimal standalone-panel project root at the given path."""
     (root / "app" / "static").mkdir(parents=True)
@@ -26,16 +24,6 @@ def make_panel_root(
             PROJECT_ROOT / "app" / "templates",
             root / "app" / "templates",
             dirs_exist_ok=True,
-        )
-    if template_marker is not None:
-        overview = root / "app" / "templates" / "project_status.html"
-        overview.write_text(
-            overview.read_text(encoding="utf-8") + f"\n<!-- {template_marker} -->\n",
-            encoding="utf-8",
-        )
-    if static_marker is not None:
-        (root / "app" / "static" / static_marker).write_text(
-            f"marker:{static_marker}", encoding="utf-8"
         )
     if project_status is not None:
         (root / "project-status.json").write_text(

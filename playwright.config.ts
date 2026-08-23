@@ -12,7 +12,7 @@ export default defineConfig({
   },
   webServer: {
     command: `.\\.venv\\Scripts\\python.exe -m tools.project_dashboard.run --host 127.0.0.1 --port ${testPort}`,
-    url: `${testBaseURL}/api/v1/project-status/dashboard`,
+    url: `${testBaseURL}/api/v1/project-status/dashboard/r3/workspaces/collaboration`,
     reuseExistingServer: !process.env.CI,
   },
 });

@@ -317,7 +317,7 @@ def test_old_raw_apis_still_closed_in_panel_mode(tmp_path) -> None:
         assert set(sync) == {"project_name", "last_updated"}
 
 
-def test_legacy_dashboard_endpoint_unaffected_by_r3_data(tmp_path) -> None:
+def test_legacy_dashboard_endpoint_is_removed_from_r3(tmp_path) -> None:
     dashboard_r3 = {
         "delivery_lines": [r3_line()],
         "delivery_facts": [r3_fact("FACT-A-1", fact_type="in_progress")],
@@ -325,7 +325,6 @@ def test_legacy_dashboard_endpoint_unaffected_by_r3_data(tmp_path) -> None:
         "declared_candidate_combinations": [],
     }
     with _client(tmp_path, dashboard_r3) as client:
-        legacy = client.get("/api/v1/project-status/dashboard").json()["data"]
-        assert set(legacy) == {"schema_version", "delivery_lines", "workspace_refs"}
-        assert "dashboard_r3" not in json.dumps(legacy, ensure_ascii=False)
+        legacy = client.get("/api/v1/project-status/dashboard")
+        assert legacy.status_code == 404
         assert "FACT-A-1" not in json.dumps(legacy, ensure_ascii=False)

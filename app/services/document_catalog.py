@@ -6,7 +6,7 @@ from typing import Any
 
 import markdown
 
-from app.config import PROJECT_ROOT
+from app.core.config import PROJECT_ROOT
 from app.services.markdown_safety import sanitize_html
 
 DOCUMENTS_DIR = PROJECT_ROOT / "docs"
