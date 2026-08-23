@@ -200,6 +200,32 @@ test('empty projection shows the fixed empty state on every card', async ({ page
   for (const card of ['conclusion', 'progress', 'gates', 'evidence']) {
     await expect(page.locator(`[data-r3-card="${card}"] .r3-empty`)).toHaveText('当前无此类事实');
   }
+  await expect(page.locator('[role="alert"]')).toHaveCount(1);
+  await expect(page.locator('.r3-alert')).toHaveAttribute('role', 'alert');
+  await expect(page.locator('.r3-alert')).toContainText('当前无此类事实');
+});
+
+test('top navigation keeps the line filter from overview and workspace pages', async ({ page }) => {
+  await page.goto('/project-status?line=mvp-b-manual-daily-record');
+  await expect(page.locator('#delivery-line-mvp-b-manual-daily-record')).toHaveClass(
+    /r3-line-focused/,
+  );
+  const primaryNav = page.getByRole('navigation', { name: '项目一级导航' });
+  await expect(primaryNav.getByRole('link', { name: '工作区' })).toHaveAttribute(
+    'href',
+    /line=mvp-b-manual-daily-record/,
+  );
+  await primaryNav.getByRole('link', { name: '工作区' }).click();
+  await expect(page).toHaveURL(/\/project-status\/workspaces[?&]line=mvp-b-manual-daily-record/);
+  await expect(page.locator('#r3-line-select')).toHaveValue('mvp-b-manual-daily-record');
+  await expect(page.locator('[data-r3-card="conclusion"]')).toContainText('MVP-B v0.1 人工每日记录闭环');
+  await expect(page.locator('[data-r3-card="conclusion"]')).not.toContainText('MVP-A 管理运营底座');
+
+  await page.goto('/project-status/workspaces/testing?line=mvp-b-manual-daily-record');
+  await expect(page.locator('[data-r3-workspace]')).not.toHaveAttribute('aria-busy', 'true');
+  await primaryNav.getByRole('link', { name: '工作区' }).click();
+  await expect(page).toHaveURL(/\/project-status\/workspaces[?&]line=mvp-b-manual-daily-record/);
+  await expect(page.locator('#r3-line-select')).toHaveValue('mvp-b-manual-daily-record');
 });
 
 test('unavailable evidence stays disabled with its server reason', async ({ page }) => {

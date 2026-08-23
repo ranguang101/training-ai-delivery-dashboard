@@ -111,16 +111,28 @@
     return el('p', 'r3-empty', COPY_NO_FACTS);
   }
 
-  function r3WarningBlock(warnings) {
+  function r3WarningBlock(messages) {
     const section = el('section', 'safe-workspace-alert r3-alert');
     section.setAttribute('role', 'alert');
     section.append(el('strong', '', '交付监控提示'));
     const list = el('ul');
-    warnings.forEach((warning) => {
-      list.append(el('li', '', textOr(warning && warning.safe_message, COPY_FIELD_MISSING)));
+    messages.forEach((message) => {
+      list.append(el('li', '', textOr(message, COPY_FIELD_MISSING)));
     });
     section.append(list);
     return section;
+  }
+
+  function r3ViewTotallyEmpty(view) {
+    const cards = view.cards || {};
+    const itemsOf = (card, key) =>
+      Array.isArray(card && card[key]) ? card[key] : [];
+    return (
+      !itemsOf(cards.conclusion, 'items').length &&
+      !itemsOf(cards.progress, 'facts').length &&
+      !itemsOf(cards.gates_and_blockers, 'facts').length &&
+      !itemsOf(cards.checked_evidence, 'items').length
+    );
   }
 
   function r3LoadFailure(target) {
@@ -143,7 +155,26 @@
       .forEach((link) => {
         link.href = r3LineHref(link.getAttribute('href') || link.href, line);
       });
+    document
+      .querySelectorAll('.console-nav-primary a[href="/project-status/workspaces"]')
+      .forEach((link) => {
+        link.href = r3LineHref('/project-status/workspaces', line);
+      });
+    document
+      .querySelectorAll('.console-nav-primary a[href="/project-status"]')
+      .forEach((link) => {
+        link.href = r3LineHref('/project-status', line);
+      });
     document.querySelectorAll('[data-r3-back-overview]').forEach((link) => {
+      link.href = r3LineHref('/project-status', line);
+    });
+  }
+
+  function r3SyncOverviewLinks(line) {
+    document.querySelectorAll('a[href="/project-status/workspaces"]').forEach((link) => {
+      link.href = r3LineHref('/project-status/workspaces', line);
+    });
+    document.querySelectorAll('a[href="/project-status"]').forEach((link) => {
       link.href = r3LineHref('/project-status', line);
     });
   }
@@ -505,8 +536,11 @@
     target.setAttribute('aria-busy', 'false');
 
     target.append(r3BuildControls(view));
-    const warnings = Array.isArray(view.warnings) ? view.warnings : [];
-    if (warnings.length) target.append(r3WarningBlock(warnings));
+    const messages = (Array.isArray(view.warnings) ? view.warnings : [])
+      .map((warning) => (warning && typeof warning.safe_message === 'string' ? warning.safe_message : null))
+      .filter((message) => message);
+    if (r3ViewTotallyEmpty(view)) messages.push(COPY_NO_FACTS);
+    if (messages.length) target.append(r3WarningBlock(messages));
 
     const grid = el('div', 'r3-card-grid');
     grid.append(
@@ -631,19 +665,13 @@
   function focusDeliveryLineFromUrl() {
     const line = r3LineFromUrl();
     if (!line) return;
+    r3SyncOverviewLinks(line);
     const card = document.getElementById(`delivery-line-${line}`);
     if (!card) return;
     card.classList.add('r3-line-focused');
     card.setAttribute('tabindex', '-1');
     card.scrollIntoView({ block: 'start' });
     card.focus({ preventScroll: true });
-    const workspaceEntry = document.querySelector('.safe-workspace-entry a');
-    if (workspaceEntry) {
-      workspaceEntry.href = r3LineHref(
-        workspaceEntry.getAttribute('href') || workspaceEntry.href,
-        line,
-      );
-    }
   }
 
   const r3Target = document.querySelector('[data-r3-workspace]');
