@@ -45,6 +45,11 @@ def test_pending_candidate_fixture_is_in_memory_only() -> None:
         assert candidate["candidate_status"] == "pending"
         assert candidate["candidate_status_label"] == "候选信息待补齐"
         assert candidate["status"] == "pending_check"
+        conclusion = data["cards"]["conclusion"]["items"][0]
+        assert conclusion["current_conclusion"] == "候选未固定，当前不可独立测试；状态待核对"
+        assert conclusion["current_candidate_summary"] == "候选信息待补齐"
+        assert conclusion["can_enter_product_acceptance"] is False
+        assert conclusion["can_enter_controlled_trial"] is False
 
     with TestClient(create_dashboard_app()) as client:
         data = _workspace(client, "development", "mvp-b-manual-daily-record")
@@ -59,6 +64,10 @@ def test_inconsistent_candidate_fixture_projects_conflict() -> None:
         assert candidate["candidate_status"] == "inconsistent"
         assert candidate["summary"] == "候选不一致，状态待核对"
         assert candidate["status"] == "pending_check"
+        conclusion = data["cards"]["conclusion"]["items"][0]
+        assert conclusion["current_conclusion"] == "候选不一致，状态待核对"
+        assert conclusion["current_candidate_summary"] == "候选不一致，状态待核对"
+        assert conclusion["can_enter_product_acceptance"] is False
 
 
 def test_unavailable_evidence_fixture_disables_target() -> None:
@@ -68,6 +77,9 @@ def test_unavailable_evidence_fixture_disables_target() -> None:
         assert evidence["available"] is False
         assert evidence["status"] == "missing"
         assert evidence["unavailable_reason"] == "证据暂不可查看"
+        conclusion = data["cards"]["conclusion"]["items"][0]
+        assert conclusion["current_conclusion"] == "核对证据不可用或日期待补录，当前状态待核对"
+        assert conclusion["can_enter_product_acceptance"] is False
 
 
 def test_empty_line_fixture_projects_honest_empty_state() -> None:
@@ -83,6 +95,9 @@ def test_stale_and_missing_date_fixture_degrades_facts() -> None:
         stale = _workspace(client, "testing", "mvp-b-manual-daily-record")
         stale_fact = stale["cards"]["progress"]["facts"][0]
         assert stale_fact["status"] == "stale"
+        stale_conclusion = stale["cards"]["conclusion"]["items"][0]
+        assert stale_conclusion["current_conclusion"] == "部分核对信息已过期，当前状态待复核"
+        assert stale_conclusion["can_enter_product_acceptance"] is False
 
         missing = _workspace(client, "development", "mvp-b-text-ai-enhancement")
         missing_fact = next(
@@ -92,6 +107,12 @@ def test_stale_and_missing_date_fixture_degrades_facts() -> None:
         )
         assert missing_fact["verified_at"] is None
         assert missing_fact["status"] == "pending_check"
+        missing_conclusion = missing["cards"]["conclusion"]["items"][0]
+        assert (
+            missing_conclusion["current_conclusion"]
+            == "核对证据不可用或日期待补录，当前状态待核对"
+        )
+        assert missing_conclusion["can_enter_product_acceptance"] is False
         assert any(item["code"] == "R3_FACT_VERIFIED_AT_MISSING" for item in missing["warnings"])
 
 

@@ -257,6 +257,8 @@ WARNING_MESSAGES = {
     "R3_CANDIDATE_STATUS_MISMATCH": "部分候选声明状态与已提供候选字段冲突，候选不一致，状态待核对",
     "R3_LINE_FLAG_UNVERIFIED": "部分准出声明缺少有效证据，已降级为待核对",
     "R3_LINE_CANDIDATE_INCONSISTENT": "交付线存在候选不一致，不显示通过或可试用结论",
+    "R3_LINE_CANDIDATE_PENDING": "交付线候选信息未固定，不显示通过或可试用结论",
+    "R3_LINE_FACT_UNVERIFIED": "交付线的核对事实或证据不可用，当前状态待核对",
     "R3_LINE_TRIAL_UNVERIFIED": (
         "可试用结论缺少产品人工验收结论或P8-min运行证据，已降级为待核对"
     ),
@@ -1017,14 +1019,50 @@ def _project_line(
     has_independent_test = "independent_test" in available_purposes
     has_product_acceptance = "product_acceptance" in available_purposes
     has_p8_min_runtime = "p8_min_runtime" in available_purposes
-    if any(
-        fact.get("candidate_status") == "inconsistent"
+    candidate_statuses = {
+        fact.get("candidate_status")
         for fact in line_facts
         if fact["fact_type"] == "candidate"
-    ):
+    }
+    # A line conclusion is only as trustworthy as the facts displayed for it.
+    # These are already safety-degraded projections.
+    supporting_statuses = {
+        fact["status"]
+        for fact in line_facts
+    }
+    conclusion = line["current_conclusion"]
+    candidate_summary = line["current_candidate_summary"]
+    conclusion_status_label = DELIVERY_STATUS_LABELS[line["delivery_status"]]
+    line_stale = _verified_at_stale(line["verified_at"])
+
+    if "inconsistent" in candidate_statuses:
         flags["can_enter_product_acceptance"] = False
         flags["can_enter_controlled_trial"] = False
         warnings.append("R3_LINE_CANDIDATE_INCONSISTENT")
+        conclusion = INCONSISTENT_SAFE_SUMMARY
+        candidate_summary = CANDIDATE_STATUS_LABELS["inconsistent"]
+        conclusion_status_label = "状态待核对"
+    elif "pending" in candidate_statuses:
+        flags["can_enter_product_acceptance"] = False
+        flags["can_enter_controlled_trial"] = False
+        warnings.append("R3_LINE_CANDIDATE_PENDING")
+        conclusion = "候选未固定，当前不可独立测试；状态待核对"
+        candidate_summary = CANDIDATE_STATUS_LABELS["pending"]
+        conclusion_status_label = "状态待核对"
+    elif "stale" in supporting_statuses or line_stale is True:
+        flags["can_enter_product_acceptance"] = False
+        flags["can_enter_controlled_trial"] = False
+        warnings.append("R3_LINE_FACT_UNVERIFIED")
+        conclusion = "部分核对信息已过期，当前状态待复核"
+        candidate_summary = "候选状态待复核"
+        conclusion_status_label = "状态待复核"
+    elif "pending_check" in supporting_statuses or line_stale is None:
+        flags["can_enter_product_acceptance"] = False
+        flags["can_enter_controlled_trial"] = False
+        warnings.append("R3_LINE_FACT_UNVERIFIED")
+        conclusion = "核对证据不可用或日期待补录，当前状态待核对"
+        candidate_summary = "候选状态待核对"
+        conclusion_status_label = "状态待核对"
     if line["can_enter_product_acceptance"] and not (
         has_independent_test or has_p8_min_runtime
     ):
@@ -1042,7 +1080,6 @@ def _project_line(
         flags["can_enter_product_acceptance"] = False
         flags["can_enter_controlled_trial"] = False
         warnings.append("R3_LINE_TRIAL_UNVERIFIED")
-    line_stale = _verified_at_stale(line["verified_at"])
     if line_stale is None:
         warnings.append(
             "R3_LINE_VERIFIED_AT_FUTURE"
@@ -1056,9 +1093,9 @@ def _project_line(
         "name": line["name"],
         "scope_summary": line["scope_summary"],
         "delivery_status": line["delivery_status"],
-        "delivery_status_label": DELIVERY_STATUS_LABELS[line["delivery_status"]],
-        "current_conclusion": line["current_conclusion"],
-        "current_candidate_summary": line["current_candidate_summary"],
+        "delivery_status_label": conclusion_status_label,
+        "current_conclusion": conclusion,
+        "current_candidate_summary": candidate_summary,
         "next_gate_summary": line["next_gate_summary"],
         "can_enter_product_acceptance": flags["can_enter_product_acceptance"],
         "can_enter_controlled_trial": flags["can_enter_controlled_trial"],

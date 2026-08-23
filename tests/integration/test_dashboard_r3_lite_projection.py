@@ -381,7 +381,7 @@ def test_missing_verified_at_warns_without_fabrication(tmp_path) -> None:
     with _client(tmp_path, dashboard_r3) as client:
         data = _workspace(client, "development")
         fact = data["cards"]["progress"]["facts"][0]
-        assert fact["status"] == "verified"
+        assert fact["status"] == "pending_check"
         assert "R3_FACT_VERIFIED_AT_MISSING" in _codes(data)
 
 

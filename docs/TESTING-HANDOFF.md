@@ -1,5 +1,14 @@
 # 看板独立测试交接
 
+## BUG-DASH-R3-UI-002 复测候选
+
+- 修复候选：当前提交（本次交接随候选一并固化）。
+- 复测范围仅为：R3-UI-008、R3-UI-010、R3-UI-016、R3-UI-019。
+- 缺陷修复口径：候选未固定、候选不一致、证据不可用、核对日期过期或缺失时，
+  “当前交付结论”必须同步降级；不得显示“独立测试通过”、允许进入产品验收、
+  允许受控试用，或保留“候选组合已固定”的摘要。
+- 默认演示状态不变；本次不代表 MVP 业务准出、产品验收或试用发布。
+
 候选的目的：验证项目交付看板本身的本机只读启动、R3 四工作区投影、故障降级与响应式界面。
 
 ## 范围边界
@@ -28,12 +37,12 @@ npx playwright test --workers=1
 
 | Case | 启动参数 | 选择的交付线 | 预期关键文案 |
 |---|---|---|---|
-| R3-UI-008 | `--r3-test-fixture pending-candidate` | MVP-B v0.1 人工每日记录闭环 | 候选信息待补齐 |
-| R3-UI-010 | `--r3-test-fixture inconsistent-candidate` | MVP-B v0.1 人工每日记录闭环 | 候选不一致，状态待核对 |
-| R3-UI-016 | `--r3-test-fixture unavailable-evidence` | MVP-B v0.1 人工每日记录闭环 | 证据暂不可查看；按钮禁用 |
+| R3-UI-008 | `--r3-test-fixture pending-candidate` | MVP-B v0.1 人工每日记录闭环 | 候选未固定，当前不可独立测试；状态待核对；不允许进入产品验收/受控试用 |
+| R3-UI-010 | `--r3-test-fixture inconsistent-candidate` | MVP-B v0.1 人工每日记录闭环 | 候选不一致，状态待核对；不允许进入产品验收/受控试用 |
+| R3-UI-016 | `--r3-test-fixture unavailable-evidence` | MVP-B v0.1 人工每日记录闭环 | 核对证据不可用或日期待补录，当前状态待核对；证据按钮禁用 |
 | R3-UI-017 | `--r3-test-fixture empty-line` | R3 UI 空态验证 | 该交付线尚未建立监控事实 |
 | R3-UI-018 | `--test-fault r3-workspace-503` | 任一工作区 | 交付信息暂未加载，当前不展示任何通过或准出结论。请刷新重试。 |
-| R3-UI-019 | `--r3-test-fixture stale-and-missing-dates` | MVP-B v0.1 / MVP-B 文字学情整理 AI | 待复核 / 核对日期待补录 |
+| R3-UI-019 | `--r3-test-fixture stale-and-missing-dates` | MVP-B v0.1 / MVP-B 文字学情整理 AI | 部分核对信息已过期，当前状态待复核 / 核对证据不可用或日期待补录，当前状态待核对 |
 
 示例：
 
