@@ -216,6 +216,30 @@ def test_evidence_detail_registered_but_unresolvable_is_unavailable(tmp_path) ->
         assert data["unavailable_reason"] == "证据尚未登记"
 
 
+def test_incompatible_evidence_purpose_is_safely_dropped(tmp_path) -> None:
+    """P8-min 只能标注在 test_run，不能借交接单伪造运行门槛。"""
+    dashboard_r3 = {
+        "delivery_lines": [r3_line()],
+        "delivery_facts": [
+            r3_fact(
+                "FACT-A-1",
+                fact_type="completed",
+                evidence_refs=[{"type": "handoff", "id": "HO-P8-PRETEND"}],
+                workspace_ids=["development"],
+            )
+        ],
+        "evidence_targets": [
+            r3_target("handoff", "HO-P8-PRETEND", purpose="p8_min_runtime")
+        ],
+        "declared_candidate_combinations": [],
+    }
+    with _client(tmp_path, dashboard_r3) as client:
+        data = client.get(WORKSPACE_URL).json()["data"]
+        assert "R3_INVALID_TARGET" in _codes(data)
+        fact = data["cards"]["progress"]["facts"][0]
+        assert fact["status"] == "pending_check"
+
+
 def test_evidence_detail_unknown_or_illegal_returns_stable_404(tmp_path) -> None:
     dashboard_r3 = {
         "delivery_lines": [r3_line()],

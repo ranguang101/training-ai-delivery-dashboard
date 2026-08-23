@@ -8,7 +8,9 @@ project_status.py 的 delivery_lines 兼容逻辑相互独立。所有输出字�
 - delivery_fact.status 枚举：verified / pending_check / stale；
 - owner_role 仅允许 development / frontend / testing 三角色；
 - verified_at 使用带时区 ISO 8601 字符串，按 72 小时判定待复核；
-- evidence_targets[].status 枚举：valid / stale / missing。
+- evidence_targets[].status 枚举：valid / stale / missing；
+- evidence_targets[].purpose 枚举：independent_test / product_acceptance /
+  p8_min_runtime / reference。用途只在服务端准出判断使用，不透传原始资料。
 """
 
 from __future__ import annotations
@@ -69,6 +71,9 @@ EVIDENCE_TYPE_VALUES = frozenset(
 )
 CANDIDATE_STATUS_VALUES = frozenset({"pending", "fixed", "inconsistent"})
 EVIDENCE_TARGET_STATUS_VALUES = frozenset({"valid", "stale", "missing"})
+EVIDENCE_PURPOSE_VALUES = frozenset(
+    {"independent_test", "product_acceptance", "p8_min_runtime", "reference"}
+)
 
 CANDIDATE_PENDING_PLACEHOLDER = "待提供"
 MIGRATION_NOT_APPLICABLE = "不适用"
@@ -77,11 +82,14 @@ INCONSISTENT_SAFE_SUMMARY = "候选不一致，状态待核对"
 PROGRESS_FACT_TYPES = frozenset({"completed", "in_progress", "next_action"})
 GATE_FACT_TYPES = frozenset({"blocked", "candidate"})
 
-# DASH-LITE-003：可试用结论必须同时具备产品人工验收结论（document/handoff）
-# 与本交付线适用的 P8-min 运行证据（test_run）；可进入产品验收需要独立测试
-# 通过证据（test_run）。
-PRODUCT_ACCEPTANCE_EVIDENCE_TYPES = frozenset({"document", "handoff"})
-RUNTIME_EVIDENCE_TYPES = frozenset({"test_run"})
+# DASH-LITE-003：准出必须按受控证据用途判断，不能只凭 document/handoff 或
+# test_run 类型推断。否则无关交接或普通测试运行会误导为产品验收或 P8-min 证据。
+PURPOSE_TYPE_VALUES = {
+    "independent_test": frozenset({"test_run"}),
+    "product_acceptance": frozenset({"document", "handoff"}),
+    "p8_min_runtime": frozenset({"test_run"}),
+    "reference": EVIDENCE_TYPE_VALUES,
+}
 
 STALE_AFTER = timedelta(hours=72)
 
@@ -124,6 +132,7 @@ EVIDENCE_TARGET_KEYS = frozenset(
         "id",
         "title",
         "status",
+        "purpose",
         "owner_role",
         "verified_at",
         "safe_summary",
@@ -566,6 +575,11 @@ def _parse_target(raw: Any, field: str) -> dict[str, Any]:
     status = _require_string(raw.get("status"), f"{field}.status")
     if status not in EVIDENCE_TARGET_STATUS_VALUES:
         raise ValueError(f"{field}.status is not supported")
+    purpose = _require_string(raw.get("purpose"), f"{field}.purpose")
+    if purpose not in EVIDENCE_PURPOSE_VALUES:
+        raise ValueError(f"{field}.purpose is not supported")
+    if target_type not in PURPOSE_TYPE_VALUES[purpose]:
+        raise ValueError(f"{field}.purpose is incompatible with type")
     owner_role = _require_string(raw.get("owner_role"), f"{field}.owner_role")
     if owner_role not in OWNER_ROLE_VALUES:
         raise ValueError(f"{field}.owner_role is not supported")
@@ -589,6 +603,7 @@ def _parse_target(raw: Any, field: str) -> dict[str, Any]:
         "id": target_id,
         "title": _require_string(raw.get("title"), f"{field}.title"),
         "status": status,
+        "purpose": purpose,
         "owner_role": owner_role,
         "verified_at": _require_string(raw.get("verified_at"), f"{field}.verified_at"),
         "safe_summary": _require_string(raw.get("safe_summary"), f"{field}.safe_summary"),
@@ -828,12 +843,13 @@ def _project_line(
             cache=cache,
         )[0]:
             available_evidence.append({"type": ref_type, "id": ref_id})
-    has_runtime = any(
-        item["type"] in RUNTIME_EVIDENCE_TYPES for item in available_evidence
-    )
-    has_product_acceptance = any(
-        item["type"] in PRODUCT_ACCEPTANCE_EVIDENCE_TYPES for item in available_evidence
-    )
+    available_purposes = {
+        targets[(item["type"], item["id"])]["purpose"]
+        for item in available_evidence
+    }
+    has_independent_test = "independent_test" in available_purposes
+    has_product_acceptance = "product_acceptance" in available_purposes
+    has_p8_min_runtime = "p8_min_runtime" in available_purposes
     if any(
         fact.get("candidate_status") == "inconsistent"
         for fact in line_facts
@@ -842,17 +858,19 @@ def _project_line(
         flags["can_enter_product_acceptance"] = False
         flags["can_enter_controlled_trial"] = False
         warnings.append("R3_LINE_CANDIDATE_INCONSISTENT")
-    if line["can_enter_product_acceptance"] and not has_runtime:
+    if line["can_enter_product_acceptance"] and not (
+        has_independent_test or has_p8_min_runtime
+    ):
         flags["can_enter_product_acceptance"] = False
         warnings.append("R3_LINE_FLAG_UNVERIFIED")
     # DASH-LITE-003：可试用必须同时具备产品人工验收结论与 P8-min 运行证据。
     if line["can_enter_controlled_trial"] and not (
-        has_runtime and has_product_acceptance
+        has_p8_min_runtime and has_product_acceptance
     ):
         flags["can_enter_controlled_trial"] = False
         warnings.append("R3_LINE_TRIAL_UNVERIFIED")
     if line["delivery_status"] == "ready_for_trial" and not (
-        has_runtime and has_product_acceptance
+        has_p8_min_runtime and has_product_acceptance
     ):
         flags["can_enter_product_acceptance"] = False
         flags["can_enter_controlled_trial"] = False

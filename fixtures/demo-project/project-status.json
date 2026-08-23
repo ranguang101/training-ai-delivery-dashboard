@@ -510,9 +510,10 @@
       {
         "type": "test_run",
         "id": "RUN-MVP-A-20260812-001000",
-        "title": "MVP-A 独立测试报告",
-        "status": "valid",
-        "owner_role": "testing",
+      "title": "MVP-A 独立测试报告",
+      "status": "valid",
+      "purpose": "independent_test",
+      "owner_role": "testing",
         "verified_at": "2099-12-31T23:59:59+08:00",
         "safe_summary": "P1/P2 独立测试通过（演示数据）",
         "related_evidence_ids": []
@@ -520,9 +521,10 @@
       {
         "type": "test_run",
         "id": "RUN-MVP-B-20260813-001000",
-        "title": "MVP-B v0.1 独立测试报告",
-        "status": "valid",
-        "owner_role": "testing",
+      "title": "MVP-B v0.1 独立测试报告",
+      "status": "valid",
+      "purpose": "independent_test",
+      "owner_role": "testing",
         "verified_at": "2099-12-31T23:59:59+08:00",
         "safe_summary": "P3 独立测试通过（演示数据）",
         "related_evidence_ids": []
@@ -530,9 +532,10 @@
       {
         "type": "handoff",
         "id": "HO-PD-011",
-        "title": "P4 文字学情整理 AI 产品交接",
-        "status": "valid",
-        "owner_role": "development",
+      "title": "P4 文字学情整理 AI 产品交接",
+      "status": "valid",
+      "purpose": "reference",
+      "owner_role": "development",
         "verified_at": "2099-12-31T23:59:59+08:00",
         "safe_summary": "P4 v1.4 范围交接（演示数据）",
         "related_evidence_ids": []

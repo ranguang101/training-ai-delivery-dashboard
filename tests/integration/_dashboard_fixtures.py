@@ -202,6 +202,7 @@ def r3_target(
     evidence_id: str = "DOC-1",
     *,
     status: str = "valid",
+    purpose: str = "reference",
     owner_role: str = "development",
     verified_at: str | None = None,
     title: str = "安全文档",
@@ -213,6 +214,7 @@ def r3_target(
         "id": evidence_id,
         "title": title,
         "status": status,
+        "purpose": purpose,
         "owner_role": owner_role,
         "verified_at": verified_at or r3_time(),
         "safe_summary": safe_summary,
@@ -251,6 +253,7 @@ def r3_test_run_target(
     target = r3_target(
         "test_run",
         run_id,
+        purpose="independent_test",
         verified_at=verified_at,
         title=title,
         safe_summary=safe_summary,
@@ -277,6 +280,7 @@ def r3_report_run_target(
     target = r3_target(
         "test_run",
         run_id,
+        purpose="independent_test",
         verified_at=verified_at,
         title=title,
         safe_summary=safe_summary,
@@ -303,6 +307,7 @@ def r3_handoff_target(
     target = r3_target(
         "handoff",
         handoff_id,
+        purpose="reference",
         verified_at=verified_at,
         title=title,
         safe_summary=safe_summary,

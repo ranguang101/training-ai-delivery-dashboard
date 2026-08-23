@@ -745,13 +745,63 @@ def test_line_flags_kept_with_valid_evidence_pair(tmp_path) -> None:
 
     def seed(root: Path) -> None:
         dashboard_r3["evidence_targets"].append(
-            r3_test_run_target(root, run_id="RUN-P1-20260809-000001")
+            r3_test_run_target(
+                root,
+                run_id="RUN-P1-20260809-000001",
+                purpose="p8_min_runtime",
+            )
         )
         dashboard_r3["evidence_targets"].append(
-            r3_handoff_target(root, handoff_id="HO-ACCEPT-1")
+            r3_handoff_target(
+                root,
+                handoff_id="HO-ACCEPT-1",
+                purpose="product_acceptance",
+            )
         )
 
     with _client(tmp_path, dashboard_r3, seed=seed) as client:
         line_item = _workspace(client, "development")["cards"]["conclusion"]["items"][0]
         assert line_item["can_enter_product_acceptance"] is True
         assert line_item["can_enter_controlled_trial"] is True
+
+
+def test_unrelated_test_run_cannot_substitute_for_p8_min_runtime(tmp_path) -> None:
+    """普通独立测试与产品验收交接齐全，也不能被误判为可试用。"""
+    dashboard_r3 = {
+        "delivery_lines": [
+            r3_line(LINE_A, can_enter_product_acceptance=True, can_enter_controlled_trial=True)
+        ],
+        "delivery_facts": [
+            r3_fact(
+                "FACT-A-1",
+                LINE_A,
+                "completed",
+                evidence_refs=[
+                    {"type": "test_run", "id": "RUN-P1-20260809-000001"},
+                    {"type": "handoff", "id": "HO-ACCEPT-1"},
+                ],
+                workspace_ids=["development"],
+            )
+        ],
+        "evidence_targets": [],
+        "declared_candidate_combinations": [],
+    }
+
+    def seed(root: Path) -> None:
+        dashboard_r3["evidence_targets"].append(
+            r3_test_run_target(root, run_id="RUN-P1-20260809-000001")
+        )
+        dashboard_r3["evidence_targets"].append(
+            r3_handoff_target(
+                root,
+                handoff_id="HO-ACCEPT-1",
+                purpose="product_acceptance",
+            )
+        )
+
+    with _client(tmp_path, dashboard_r3, seed=seed) as client:
+        data = _workspace(client, "development")
+        line_item = data["cards"]["conclusion"]["items"][0]
+        assert line_item["can_enter_product_acceptance"] is True
+        assert line_item["can_enter_controlled_trial"] is False
+        assert "R3_LINE_TRIAL_UNVERIFIED" in _codes(data)
