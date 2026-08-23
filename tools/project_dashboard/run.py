@@ -10,6 +10,15 @@ import uvicorn
 
 from tools.project_dashboard.main import DEFAULT_DASHBOARD_DATA_ROOT, create_dashboard_app
 
+R3_TEST_FIXTURE_CHOICES = (
+    "pending-candidate",
+    "inconsistent-candidate",
+    "unavailable-evidence",
+    "empty-line",
+    "stale-and-missing-dates",
+)
+R3_TEST_FAULT_CHOICES = ("r3-workspace-503",)
+
 LOOPBACK_NAMES = frozenset({"127.0.0.1", "localhost", "::1"})
 
 
@@ -43,13 +52,27 @@ def main() -> None:
         default=DEFAULT_DASHBOARD_DATA_ROOT,
         help="Read-only project-status fixture or project root to display",
     )
+    parser.add_argument(
+        "--r3-test-fixture",
+        choices=R3_TEST_FIXTURE_CHOICES,
+        help="Test-only in-memory R3 UI scenario; default demo data is unchanged",
+    )
+    parser.add_argument(
+        "--test-fault",
+        choices=R3_TEST_FAULT_CHOICES,
+        help="Test-only local fault injection; default is disabled",
+    )
     args = parser.parse_args()
     try:
         host = resolve_loopback_host(args.host)
     except ValueError as exc:
         parser.error(str(exc))
     uvicorn.run(
-        create_dashboard_app(args.project_root),
+        create_dashboard_app(
+            args.project_root,
+            r3_test_fixture=args.r3_test_fixture,
+            test_fault=args.test_fault,
+        ),
         host=host,
         port=args.port,
     )

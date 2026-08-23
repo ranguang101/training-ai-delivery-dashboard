@@ -16,6 +16,7 @@ from fastapi.templating import Jinja2Templates
 
 from app.core.config import PROJECT_ROOT, get_settings
 from app.services.delivery_monitor import (
+    R3_TEST_FIXTURE_VALUES,
     WORKSPACE_ID_VALUES,
     build_r3_workspace_view,
     load_r3_evidence_detail,
@@ -45,6 +46,12 @@ def _project_root(request: Request) -> Path:
 def _templates_for(request: Request) -> Jinja2Templates:
     configured = getattr(request.app.state, "project_status_templates", None)
     return configured if configured is not None else templates
+
+
+def _r3_test_fixture(request: Request) -> str | None:
+    """Read the runner-owned UI scenario selector; it is never request controlled."""
+    fixture = getattr(request.app.state, "dashboard_r3_test_fixture", None)
+    return fixture if fixture in R3_TEST_FIXTURE_VALUES else None
 
 
 def _sync_projection(project_root: Path) -> dict[str, str | None]:
@@ -93,9 +100,14 @@ def r3_workspace_data(
     _ensure_enabled()
     if workspace_id not in WORKSPACE_ID_VALUES:
         raise HTTPException(status_code=404, detail="R3_WORKSPACE_NOT_FOUND")
+    if getattr(request.app.state, "dashboard_test_fault", None) == "r3-workspace-503":
+        raise HTTPException(status_code=503, detail="R3_TEST_WORKSPACE_UNAVAILABLE")
     try:
         data = build_r3_workspace_view(
-            workspace_id, line_id=line, project_root=_project_root(request)
+            workspace_id,
+            line_id=line,
+            project_root=_project_root(request),
+            test_fixture=_r3_test_fixture(request),
         )
     except KeyError as exc:
         raise HTTPException(status_code=404, detail="R3_LINE_NOT_FOUND") from exc

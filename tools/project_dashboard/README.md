@@ -26,3 +26,8 @@ Invoke-WebRequest http://127.0.0.1:8010/api/v1/project-status/dashboard/r3/works
 
 旧的 R2 交付线、原始文档/报告、Case 设计与辅助自动化详情入口均已从独立看板移除；
 它们不会通过本仓库重新暴露。
+
+R3 UI 补测可显式传入 `--r3-test-fixture`（候选待补齐、候选不一致、证据不可用、
+空交付线、过期/缺失核对时间）或 `--test-fault r3-workspace-503`。这些参数仅改变
+当前进程的内存投影；完整场景、预期文案与恢复方式见
+[`docs/TESTING-HANDOFF.md`](../../docs/TESTING-HANDOFF.md)。

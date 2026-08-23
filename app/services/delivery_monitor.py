@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import json
 import re
+from copy import deepcopy
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
@@ -139,6 +140,18 @@ PURPOSE_TYPE_VALUES = {
     "p8_min_runtime": frozenset({"test_run"}),
     "reference": EVIDENCE_TYPE_VALUES,
 }
+
+# 仅供独立看板的 UI 补测使用。运行器显式选择后，才在内存中变换默认演示
+# 数据；不写回 project-status.json，也不改变默认展示或正式交付结论。
+R3_TEST_FIXTURE_VALUES = frozenset(
+    {
+        "pending-candidate",
+        "inconsistent-candidate",
+        "unavailable-evidence",
+        "empty-line",
+        "stale-and-missing-dates",
+    }
+)
 
 STALE_AFTER = timedelta(hours=72)
 
@@ -476,6 +489,62 @@ def _load_r3_section(project_root: Path) -> dict[str, Any]:
         if key in section and not isinstance(section[key], list):
             raise _R3LoadError(f"dashboard_r3.{key} must be an array")
     return section
+
+
+def _apply_r3_test_fixture(section: dict[str, Any], fixture: str | None) -> dict[str, Any]:
+    """Return an in-memory R3 UI test scenario without mutating source assets."""
+    if fixture is None:
+        return section
+    if fixture not in R3_TEST_FIXTURE_VALUES:
+        raise ValueError("unsupported R3 test fixture")
+
+    result = deepcopy(section)
+    facts = result.get("delivery_facts")
+    targets = result.get("evidence_targets")
+    lines = result.get("delivery_lines")
+    if not isinstance(facts, list) or not isinstance(targets, list) or not isinstance(lines, list):
+        raise ValueError("R3 test fixture requires complete demo data")
+
+    def fact_by_id(fact_id: str) -> dict[str, Any]:
+        for fact in facts:
+            if isinstance(fact, dict) and fact.get("fact_id") == fact_id:
+                return fact
+        raise ValueError("R3 test fixture fact is unavailable")
+
+    if fixture == "pending-candidate":
+        candidate = fact_by_id("FACT-MVPB-002")
+        candidate["backend_candidate"] = CANDIDATE_PENDING_PLACEHOLDER
+        candidate["candidate_status"] = "pending"
+    elif fixture == "inconsistent-candidate":
+        candidate = fact_by_id("FACT-MVPB-002")
+        candidate["frontend_candidate"] = "frontend-conflict-r3"
+        candidate["candidate_status"] = "inconsistent"
+    elif fixture == "unavailable-evidence":
+        for target in targets:
+            if isinstance(target, dict) and target.get("id") == "RUN-MVP-B-20260813-001000":
+                target["status"] = "missing"
+                break
+        else:
+            raise ValueError("R3 test fixture evidence target is unavailable")
+    elif fixture == "empty-line":
+        lines.append(
+            {
+                "delivery_line_id": "r3-test-empty-line",
+                "name": "R3 UI 空态验证",
+                "scope_summary": "仅用于独立 UI 空态补测，不代表交付结论",
+                "delivery_status": "planning",
+                "current_conclusion": "该交付线尚未建立监控事实",
+                "current_candidate_summary": "候选未建立",
+                "next_gate_summary": "等待建立首条交付事实",
+                "can_enter_product_acceptance": False,
+                "can_enter_controlled_trial": False,
+                "verified_at": "2026-08-23T09:00:00+08:00",
+            }
+        )
+    elif fixture == "stale-and-missing-dates":
+        fact_by_id("FACT-MVPB-001")["verified_at"] = "2000-01-01T00:00:00+08:00"
+        fact_by_id("FACT-MVPC-002")["verified_at"] = "invalid-test-date"
+    return result
 
 
 def _parse_line(raw: Any, field: str) -> dict[str, Any]:
@@ -876,6 +945,10 @@ def _project_fact(
 
     stale_flag = _verified_at_stale(fact["verified_at"])
     if stale_flag is None:
+        # A missing, malformed or future timestamp cannot support an “已核对”
+        # conclusion. Preserve the safe summary but downgrade its status.
+        if projected["status"] == "verified":
+            projected["status"] = "pending_check"
         warnings.append(
             "R3_FACT_VERIFIED_AT_FUTURE"
             if _verified_at_is_future(fact["verified_at"])
@@ -1059,6 +1132,7 @@ def build_r3_workspace_view(
     *,
     line_id: str | None = None,
     project_root: Path = PROJECT_ROOT,
+    test_fixture: str | None = None,
 ) -> dict[str, Any]:
     """构造 R3 工作区受控投影；任何根级数据失败都返回安全空投影。"""
     if workspace_id not in WORKSPACE_ID_VALUES:
@@ -1066,10 +1140,11 @@ def build_r3_workspace_view(
     view = _empty_workspace_view(workspace_id)
     try:
         section = _load_r3_section(project_root)
+        section = _apply_r3_test_fixture(section, test_fixture)
     except _R3SectionMissing:
         view["warnings"].append(_warning("R3_SECTION_MISSING"))
         return view
-    except _R3LoadError:
+    except (_R3LoadError, ValueError):
         view["warnings"].append(_warning("R3_DATA_UNAVAILABLE"))
         return view
 
