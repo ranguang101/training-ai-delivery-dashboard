@@ -232,6 +232,23 @@ test('top navigation keeps the line filter from overview and workspace pages', a
   await expect(page.locator('#r3-line-select')).toHaveValue('mvp-b-manual-daily-record');
 });
 
+test('top navigation follows the latest selected delivery line', async ({ page }) => {
+  await page.goto('/project-status/workspaces');
+  await expect(page.locator('[data-r3-workspace]')).not.toHaveAttribute('aria-busy', 'true');
+
+  await page.locator('#r3-line-select').selectOption('mvp-a-management-foundation');
+  await page.locator('#r3-line-select').selectOption('mvp-b-text-ai-enhancement');
+  const primaryNav = page.getByRole('navigation', { name: '项目一级导航' });
+  await expect(primaryNav.getByRole('link', { name: '项目总览' })).toHaveAttribute(
+    'href',
+    /line=mvp-b-text-ai-enhancement/,
+  );
+  await expect(primaryNav.getByRole('link', { name: '工作区' })).toHaveAttribute(
+    'href',
+    /line=mvp-b-text-ai-enhancement/,
+  );
+});
+
 test('unavailable evidence stays disabled with its server reason', async ({ page }) => {
   await page.route('**/api/v1/project-status/dashboard/r3/workspaces/**', (route) =>
     route.fulfill({

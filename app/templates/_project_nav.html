@@ -3,8 +3,8 @@
 {% set is_workspace = current_path.startswith("/project-status/workspaces") %}
 <div class="project-nav-stack">
   <nav class="console-nav console-nav-primary" aria-label="项目一级导航">
-    <a class="{% if is_overview %}is-active{% endif %}" href="/project-status">项目总览</a>
-    <a class="{% if is_workspace %}is-active{% endif %}" href="/project-status/workspaces">工作区</a>
+    <a class="{% if is_overview %}is-active{% endif %}" data-r3-nav="overview" href="/project-status">项目总览</a>
+    <a class="{% if is_workspace %}is-active{% endif %}" data-r3-nav="workspace" href="/project-status/workspaces">工作区</a>
   </nav>
 
   {% if is_workspace %}

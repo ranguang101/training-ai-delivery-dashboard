@@ -156,25 +156,16 @@
         link.href = r3LineHref(link.getAttribute('href') || link.href, line);
       });
     document
-      .querySelectorAll('.console-nav-primary a[href="/project-status/workspaces"]')
+      .querySelectorAll('[data-r3-nav="workspace"]')
       .forEach((link) => {
         link.href = r3LineHref('/project-status/workspaces', line);
       });
     document
-      .querySelectorAll('.console-nav-primary a[href="/project-status"]')
+      .querySelectorAll('[data-r3-nav="overview"]')
       .forEach((link) => {
         link.href = r3LineHref('/project-status', line);
       });
     document.querySelectorAll('[data-r3-back-overview]').forEach((link) => {
-      link.href = r3LineHref('/project-status', line);
-    });
-  }
-
-  function r3SyncOverviewLinks(line) {
-    document.querySelectorAll('a[href="/project-status/workspaces"]').forEach((link) => {
-      link.href = r3LineHref('/project-status/workspaces', line);
-    });
-    document.querySelectorAll('a[href="/project-status"]').forEach((link) => {
       link.href = r3LineHref('/project-status', line);
     });
   }
@@ -662,36 +653,11 @@
     }
   }
 
-  function focusDeliveryLineFromUrl() {
-    const line = r3LineFromUrl();
-    if (!line) return;
-    r3SyncOverviewLinks(line);
-    const card = document.getElementById(`delivery-line-${line}`);
-    if (!card) return;
-    card.classList.add('r3-line-focused');
-    card.setAttribute('tabindex', '-1');
-    card.scrollIntoView({ block: 'start' });
-    card.focus({ preventScroll: true });
-  }
-
   const r3Target = document.querySelector('[data-r3-workspace]');
   if (r3Target) {
     if ('scrollRestoration' in window.history) window.history.scrollRestoration = 'manual';
     window.scrollTo(0, 0);
     r3SyncNavLine(r3LineFromUrl());
     loadR3Workspace();
-  } else {
-    const lineFromUrl = r3LineFromUrl();
-    const deliveryContent = document.querySelector('[data-delivery-lines-content]');
-    if (deliveryContent && lineFromUrl) {
-      const observer = new MutationObserver(() => {
-        if (document.getElementById(`delivery-line-${lineFromUrl}`)) {
-          focusDeliveryLineFromUrl();
-          observer.disconnect();
-        }
-      });
-      observer.observe(deliveryContent, { childList: true, subtree: true });
-      focusDeliveryLineFromUrl();
-    }
   }
 })();
