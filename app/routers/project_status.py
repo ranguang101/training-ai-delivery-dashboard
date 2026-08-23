@@ -11,6 +11,11 @@ from fastapi.templating import Jinja2Templates
 from markupsafe import Markup
 
 from app.config import PROJECT_ROOT, get_settings
+from app.services.delivery_monitor import (
+    WORKSPACE_ID_VALUES,
+    build_r3_workspace_view,
+    load_r3_evidence_detail,
+)
 from app.services.document_catalog import (
     STATUS_LABELS as DOCUMENT_STATUS_LABELS,
 )
@@ -411,6 +416,46 @@ def project_delivery_evidence_data(line_id: str, evidence_id: str, request: Requ
         }
     except KeyError as exc:
         raise HTTPException(status_code=404, detail="DELIVERY_EVIDENCE_NOT_FOUND") from exc
+
+
+@router.get(
+    "/api/v1/project-status/dashboard/r3/workspaces/{workspace_id}",
+    include_in_schema=False,
+)
+def project_r3_workspace_data(
+    workspace_id: str, request: Request, line: str | None = None
+) -> dict:
+    """Return the controlled R3 workspace projection for the lightweight monitor."""
+    ensure_project_status_enabled()
+    if workspace_id not in WORKSPACE_ID_VALUES:
+        raise HTTPException(status_code=404, detail="R3_WORKSPACE_NOT_FOUND")
+    try:
+        view = build_r3_workspace_view(
+            workspace_id,
+            line_id=line,
+            project_root=_request_project_root(request) or PROJECT_ROOT,
+        )
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail="R3_LINE_NOT_FOUND") from exc
+    return {"success": True, "data": view}
+
+
+@router.get(
+    "/api/v1/project-status/dashboard/r3/evidence/{evidence_type}/{evidence_id}",
+    include_in_schema=False,
+)
+def project_r3_evidence_data(evidence_type: str, evidence_id: str, request: Request) -> dict:
+    """Serve one safe evidence projection from the controlled target registry."""
+    ensure_project_status_enabled()
+    try:
+        data = load_r3_evidence_detail(
+            evidence_type,
+            evidence_id,
+            project_root=_request_project_root(request) or PROJECT_ROOT,
+        )
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail="R3_EVIDENCE_NOT_FOUND") from exc
+    return {"success": True, "data": data}
 
 
 @router.get("/project-status", response_class=HTMLResponse, include_in_schema=False)

@@ -21,13 +21,45 @@
       "delivery_status": "product_acceptance",
       "summary": "演示数据：管理运营底座等待独立验收，不代表正式通过。",
       "updated_at": "2026-08-22T10:00:00+08:00",
-      "scope_in": [{"id": "P1-min", "label": "最小账号与权限"}, {"id": "P2-min", "label": "最小学生与归属"}],
-      "scope_out": [{"id": "P3", "label": "每日记录闭环"}],
-      "contract_state": {"status": "frozen", "safe_summary": "演示契约状态。"},
-      "candidate_version": {"status": "fixed", "safe_summary": "演示候选版本。"},
-      "runtime_gate": {"status": "evidence_ready", "safe_summary": "仍需独立验收。"},
+      "scope_in": [
+        {
+          "id": "P1-min",
+          "label": "最小账号与权限"
+        },
+        {
+          "id": "P2-min",
+          "label": "最小学生与归属"
+        }
+      ],
+      "scope_out": [
+        {
+          "id": "P3",
+          "label": "每日记录闭环"
+        }
+      ],
+      "contract_state": {
+        "status": "frozen",
+        "safe_summary": "演示契约状态。"
+      },
+      "candidate_version": {
+        "status": "fixed",
+        "safe_summary": "演示候选版本。"
+      },
+      "runtime_gate": {
+        "status": "evidence_ready",
+        "safe_summary": "仍需独立验收。"
+      },
       "evidence_links": [],
-      "open_blockers": [{"id": "DEMO-MVPA-ACCEPTANCE", "title": "等待独立验收", "status": "open", "next_action": "使用真实交付资料复验。", "updated_at": "2026-08-22", "evidence_refs": []}]
+      "open_blockers": [
+        {
+          "id": "DEMO-MVPA-ACCEPTANCE",
+          "title": "等待独立验收",
+          "status": "open",
+          "next_action": "使用真实交付资料复验。",
+          "updated_at": "2026-08-22",
+          "evidence_refs": []
+        }
+      ]
     },
     {
       "id": "mvp-b-manual-daily-record",
@@ -40,13 +72,41 @@
       "delivery_status": "contract_freeze",
       "summary": "演示数据：人工每日记录主链尚未由本演示夹具声明为可试用。",
       "updated_at": "2026-08-22T10:00:00+08:00",
-      "scope_in": [{"id": "P3", "label": "人工记录与审核"}],
-      "scope_out": [{"id": "P4", "label": "文字 AI 增强"}],
-      "contract_state": {"status": "not_frozen", "safe_summary": "演示契约状态。"},
-      "candidate_version": {"status": "not_fixed", "safe_summary": "尚无演示候选。"},
-      "runtime_gate": {"status": "not_assessed", "safe_summary": "尚未开展运行复验。"},
+      "scope_in": [
+        {
+          "id": "P3",
+          "label": "人工记录与审核"
+        }
+      ],
+      "scope_out": [
+        {
+          "id": "P4",
+          "label": "文字 AI 增强"
+        }
+      ],
+      "contract_state": {
+        "status": "not_frozen",
+        "safe_summary": "演示契约状态。"
+      },
+      "candidate_version": {
+        "status": "not_fixed",
+        "safe_summary": "尚无演示候选。"
+      },
+      "runtime_gate": {
+        "status": "not_assessed",
+        "safe_summary": "尚未开展运行复验。"
+      },
       "evidence_links": [],
-      "open_blockers": [{"id": "DEMO-MVPB-CONTRACT", "title": "等待字段级契约", "status": "open", "next_action": "在真实项目资料中冻结并复验。", "updated_at": "2026-08-22", "evidence_refs": []}]
+      "open_blockers": [
+        {
+          "id": "DEMO-MVPB-CONTRACT",
+          "title": "等待字段级契约",
+          "status": "open",
+          "next_action": "在真实项目资料中冻结并复验。",
+          "updated_at": "2026-08-22",
+          "evidence_refs": []
+        }
+      ]
     },
     {
       "id": "mvp-b-text-ai-enhancement",
@@ -59,13 +119,41 @@
       "delivery_status": "planning",
       "summary": "演示数据：文字 AI 增强处于规划状态。",
       "updated_at": "2026-08-22T10:00:00+08:00",
-      "scope_in": [{"id": "P4", "label": "文字整理 AI"}],
-      "scope_out": [{"id": "P5-P7", "label": "后续扩展"}],
-      "contract_state": {"status": "not_frozen", "safe_summary": "尚未冻结。"},
-      "candidate_version": {"status": "not_fixed", "safe_summary": "尚未固定。"},
-      "runtime_gate": {"status": "not_assessed", "safe_summary": "尚未评估。"},
+      "scope_in": [
+        {
+          "id": "P4",
+          "label": "文字整理 AI"
+        }
+      ],
+      "scope_out": [
+        {
+          "id": "P5-P7",
+          "label": "后续扩展"
+        }
+      ],
+      "contract_state": {
+        "status": "not_frozen",
+        "safe_summary": "尚未冻结。"
+      },
+      "candidate_version": {
+        "status": "not_fixed",
+        "safe_summary": "尚未固定。"
+      },
+      "runtime_gate": {
+        "status": "not_assessed",
+        "safe_summary": "尚未评估。"
+      },
       "evidence_links": [],
-      "open_blockers": [{"id": "DEMO-MVPB-AI-PLAN", "title": "等待后续规划", "status": "open", "next_action": "不得以演示数据推断版本准出。", "updated_at": "2026-08-22", "evidence_refs": []}]
+      "open_blockers": [
+        {
+          "id": "DEMO-MVPB-AI-PLAN",
+          "title": "等待后续规划",
+          "status": "open",
+          "next_action": "不得以演示数据推断版本准出。",
+          "updated_at": "2026-08-22",
+          "evidence_refs": []
+        }
+      ]
     }
   ],
   "safe_workspaces": [
@@ -74,13 +162,34 @@
       "display_label": "协作总览",
       "owner_role": "project_owner",
       "status": "integration",
-      "completed_items": [{"id": "DEMO-COLLAB-SUMMARY", "label": "演示项：跨角色安全摘要范围已核对", "checked_at": "2026-08-22", "source_role": "project_owner", "evidence_refs": []}],
+      "completed_items": [
+        {
+          "id": "DEMO-COLLAB-SUMMARY",
+          "label": "演示项：跨角色安全摘要范围已核对",
+          "checked_at": "2026-08-22",
+          "source_role": "project_owner",
+          "evidence_refs": []
+        }
+      ],
       "current": "以交付线汇总跨角色依赖，演示数据不代表实际角色结论。",
       "next": "由负责人确认各交付线的真实证据后更新摘要。",
       "updated_at": "2026-08-22T10:00:00+08:00",
       "checked_at": "2026-08-22",
-      "delivery_line_refs": ["mvp-a-management-foundation", "mvp-b-manual-daily-record", "mvp-b-text-ai-enhancement"],
-      "open_blockers": [{"id": "DEMO-COLLAB-001", "title": "等待真实交付资料", "status": "open", "next_action": "仅以受控证据更新跨角色协作摘要。", "updated_at": "2026-08-22", "evidence_refs": []}],
+      "delivery_line_refs": [
+        "mvp-a-management-foundation",
+        "mvp-b-manual-daily-record",
+        "mvp-b-text-ai-enhancement"
+      ],
+      "open_blockers": [
+        {
+          "id": "DEMO-COLLAB-001",
+          "title": "等待真实交付资料",
+          "status": "open",
+          "next_action": "仅以受控证据更新跨角色协作摘要。",
+          "updated_at": "2026-08-22",
+          "evidence_refs": []
+        }
+      ],
       "evidence_refs": []
     },
     {
@@ -88,13 +197,33 @@
       "display_label": "服务端工作区",
       "owner_role": "development",
       "status": "implementation",
-      "completed_items": [{"id": "DEMO-DEV-PROJECTION", "label": "演示项：受控工作区投影已配置", "checked_at": "2026-08-22", "source_role": "development", "evidence_refs": []}],
+      "completed_items": [
+        {
+          "id": "DEMO-DEV-PROJECTION",
+          "label": "演示项：受控工作区投影已配置",
+          "checked_at": "2026-08-22",
+          "source_role": "development",
+          "evidence_refs": []
+        }
+      ],
       "current": "维护独立看板的安全投影与只读接口。",
       "next": "固定安全工作区接口后交由前端接入。",
       "updated_at": "2026-08-22T10:00:00+08:00",
       "checked_at": "2026-08-22",
-      "delivery_line_refs": ["mvp-a-management-foundation", "mvp-b-manual-daily-record"],
-      "open_blockers": [{"id": "DEMO-DEV-001", "title": "等待独立验收", "status": "open", "next_action": "使用真实项目资料完成独立复验。", "updated_at": "2026-08-22", "evidence_refs": []}],
+      "delivery_line_refs": [
+        "mvp-a-management-foundation",
+        "mvp-b-manual-daily-record"
+      ],
+      "open_blockers": [
+        {
+          "id": "DEMO-DEV-001",
+          "title": "等待独立验收",
+          "status": "open",
+          "next_action": "使用真实项目资料完成独立复验。",
+          "updated_at": "2026-08-22",
+          "evidence_refs": []
+        }
+      ],
       "evidence_refs": []
     },
     {
@@ -102,13 +231,34 @@
       "display_label": "前端工作区",
       "owner_role": "frontend",
       "status": "implementation",
-      "completed_items": [{"id": "DEMO-FE-ENTRY", "label": "演示项：安全工作区入口已配置", "checked_at": "2026-08-22", "source_role": "frontend", "evidence_refs": []}],
+      "completed_items": [
+        {
+          "id": "DEMO-FE-ENTRY",
+          "label": "演示项：安全工作区入口已配置",
+          "checked_at": "2026-08-22",
+          "source_role": "frontend",
+          "evidence_refs": []
+        }
+      ],
       "current": "准备以受控工作区接口实现统一导航与页面。",
       "next": "在固定服务端候选上完成页面联调。",
       "updated_at": "2026-08-22T10:00:00+08:00",
       "checked_at": "2026-08-22",
-      "delivery_line_refs": ["mvp-a-management-foundation", "mvp-b-manual-daily-record", "mvp-b-text-ai-enhancement"],
-      "open_blockers": [{"id": "DEMO-FE-001", "title": "等待安全接口候选", "status": "open", "next_action": "仅消费固定的安全摘要接口。", "updated_at": "2026-08-22", "evidence_refs": []}],
+      "delivery_line_refs": [
+        "mvp-a-management-foundation",
+        "mvp-b-manual-daily-record",
+        "mvp-b-text-ai-enhancement"
+      ],
+      "open_blockers": [
+        {
+          "id": "DEMO-FE-001",
+          "title": "等待安全接口候选",
+          "status": "open",
+          "next_action": "仅消费固定的安全摘要接口。",
+          "updated_at": "2026-08-22",
+          "evidence_refs": []
+        }
+      ],
       "evidence_refs": []
     },
     {
@@ -116,14 +266,286 @@
       "display_label": "质量工作区",
       "owner_role": "testing",
       "status": "independent_test",
-      "completed_items": [{"id": "DEMO-QA-BOUNDARY", "label": "演示项：质量摘要展示边界已核对", "checked_at": "2026-08-22", "source_role": "testing", "evidence_refs": []}],
+      "completed_items": [
+        {
+          "id": "DEMO-QA-BOUNDARY",
+          "label": "演示项：质量摘要展示边界已核对",
+          "checked_at": "2026-08-22",
+          "source_role": "testing",
+          "evidence_refs": []
+        }
+      ],
       "current": "展示受控测试摘要与辅助自动化边界。",
       "next": "测试负责人独立复验工作区组合候选。",
       "updated_at": "2026-08-22T10:00:00+08:00",
       "checked_at": "2026-08-22",
-      "delivery_line_refs": ["mvp-a-management-foundation", "mvp-b-manual-daily-record"],
-      "open_blockers": [{"id": "DEMO-QA-001", "title": "等待组合候选", "status": "open", "next_action": "独立执行接口和浏览器验收。", "updated_at": "2026-08-22", "evidence_refs": []}],
+      "delivery_line_refs": [
+        "mvp-a-management-foundation",
+        "mvp-b-manual-daily-record"
+      ],
+      "open_blockers": [
+        {
+          "id": "DEMO-QA-001",
+          "title": "等待组合候选",
+          "status": "open",
+          "next_action": "独立执行接口和浏览器验收。",
+          "updated_at": "2026-08-22",
+          "evidence_refs": []
+        }
+      ],
       "evidence_refs": []
     }
-  ]
+  ],
+  "dashboard_r3": {
+    "delivery_lines": [
+      {
+        "delivery_line_id": "mvp-a-management-foundation",
+        "name": "MVP-A 管理运营底座",
+        "scope_summary": "演示范围摘要，不代表任何产品准出",
+        "delivery_status": "product_acceptance",
+        "current_conclusion": "P1/P2 独立测试通过，等待项目负责人最终人工验收；P8-min 未通过前不可试用",
+        "current_candidate_summary": "不涉及组合候选（演示数据）",
+        "next_gate_summary": "下一道门禁：项目负责人产品人工验收与 P8-min 单列运行验收",
+        "can_enter_product_acceptance": true,
+        "can_enter_controlled_trial": false,
+        "verified_at": "2099-12-31T23:59:59+08:00"
+      },
+      {
+        "delivery_line_id": "mvp-b-manual-daily-record",
+        "name": "MVP-B v0.1 人工每日记录闭环",
+        "scope_summary": "演示范围摘要，不代表任何产品准出",
+        "delivery_status": "product_acceptance",
+        "current_conclusion": "独立测试通过，可进入产品人工验收；P8-min 未通过前不可试用或发布",
+        "current_candidate_summary": "候选组合 9e38e599 已固定",
+        "next_gate_summary": "下一道门禁：三角色产品人工验收与 P8-min 运行验收",
+        "can_enter_product_acceptance": true,
+        "can_enter_controlled_trial": false,
+        "verified_at": "2099-12-31T23:59:59+08:00"
+      },
+      {
+        "delivery_line_id": "mvp-b-text-ai-enhancement",
+        "name": "MVP-B 文字学情整理 AI 增强",
+        "scope_summary": "演示范围摘要，不代表任何产品准出",
+        "delivery_status": "contract_freeze",
+        "current_conclusion": "P4 v1.4 范围已确认，字段级契约与实现待完成",
+        "current_candidate_summary": "候选未建立",
+        "next_gate_summary": "下一道门禁：TR-P4、字段级契约与实现",
+        "can_enter_product_acceptance": false,
+        "can_enter_controlled_trial": false,
+        "verified_at": "2099-12-31T23:59:59+08:00"
+      }
+    ],
+    "delivery_facts": [
+      {
+        "fact_id": "FACT-MVPA-001",
+        "delivery_line_id": "mvp-a-management-foundation",
+        "fact_type": "completed",
+        "status": "verified",
+        "owner_role": "testing",
+        "verified_at": "2099-12-31T23:59:59+08:00",
+        "summary": "P1/P2 独立测试通过",
+        "evidence_refs": [
+          {
+            "type": "test_run",
+            "id": "RUN-MVP-A-20260812-001000"
+          }
+        ],
+        "workspace_ids": [
+          "collaboration",
+          "development",
+          "testing"
+        ]
+      },
+      {
+        "fact_id": "FACT-MVPA-002",
+        "delivery_line_id": "mvp-a-management-foundation",
+        "fact_type": "blocked",
+        "status": "verified",
+        "owner_role": "testing",
+        "verified_at": "2099-12-31T23:59:59+08:00",
+        "summary": "等待项目负责人最终人工验收",
+        "evidence_refs": [],
+        "workspace_ids": [
+          "collaboration",
+          "testing"
+        ]
+      },
+      {
+        "fact_id": "FACT-MVPA-003",
+        "delivery_line_id": "mvp-a-management-foundation",
+        "fact_type": "next_action",
+        "status": "verified",
+        "owner_role": "development",
+        "verified_at": "2099-12-31T23:59:59+08:00",
+        "summary": "P8-min 单列运行验收准备",
+        "evidence_refs": [],
+        "workspace_ids": [
+          "collaboration",
+          "development"
+        ]
+      },
+      {
+        "fact_id": "FACT-MVPB-001",
+        "delivery_line_id": "mvp-b-manual-daily-record",
+        "fact_type": "completed",
+        "status": "verified",
+        "owner_role": "testing",
+        "verified_at": "2099-12-31T23:59:59+08:00",
+        "summary": "P3 独立测试通过",
+        "evidence_refs": [
+          {
+            "type": "test_run",
+            "id": "RUN-MVP-B-20260813-001000"
+          }
+        ],
+        "workspace_ids": [
+          "collaboration",
+          "development",
+          "testing"
+        ]
+      },
+      {
+        "fact_id": "FACT-MVPB-002",
+        "delivery_line_id": "mvp-b-manual-daily-record",
+        "fact_type": "candidate",
+        "status": "verified",
+        "owner_role": "development",
+        "verified_at": "2099-12-31T23:59:59+08:00",
+        "summary": "v0.1 候选组合 9e38e599",
+        "evidence_refs": [
+          {
+            "type": "test_run",
+            "id": "RUN-MVP-B-20260813-001000"
+          }
+        ],
+        "workspace_ids": [
+          "collaboration",
+          "development",
+          "frontend",
+          "testing"
+        ],
+        "backend_candidate": "9e38e599",
+        "frontend_candidate": "9e38e599",
+        "migration_summary": "不适用",
+        "startup_handoff_ref": "HO-PD-013",
+        "candidate_status": "fixed"
+      },
+      {
+        "fact_id": "FACT-MVPB-003",
+        "delivery_line_id": "mvp-b-manual-daily-record",
+        "fact_type": "blocked",
+        "status": "verified",
+        "owner_role": "testing",
+        "verified_at": "2099-12-31T23:59:59+08:00",
+        "summary": "等待三角色产品人工验收及 P8-min 运行验收",
+        "evidence_refs": [],
+        "workspace_ids": [
+          "collaboration",
+          "testing"
+        ]
+      },
+      {
+        "fact_id": "FACT-MVPC-001",
+        "delivery_line_id": "mvp-b-text-ai-enhancement",
+        "fact_type": "completed",
+        "status": "verified",
+        "owner_role": "development",
+        "verified_at": "2099-12-31T23:59:59+08:00",
+        "summary": "P4 v1.4 范围确认",
+        "evidence_refs": [
+          {
+            "type": "handoff",
+            "id": "HO-PD-011"
+          }
+        ],
+        "workspace_ids": [
+          "collaboration",
+          "development"
+        ]
+      },
+      {
+        "fact_id": "FACT-MVPC-002",
+        "delivery_line_id": "mvp-b-text-ai-enhancement",
+        "fact_type": "in_progress",
+        "status": "verified",
+        "owner_role": "development",
+        "verified_at": "2099-12-31T23:59:59+08:00",
+        "summary": "P4 字段级接口契约编写",
+        "evidence_refs": [],
+        "workspace_ids": [
+          "collaboration",
+          "development"
+        ]
+      },
+      {
+        "fact_id": "FACT-MVPC-003",
+        "delivery_line_id": "mvp-b-text-ai-enhancement",
+        "fact_type": "blocked",
+        "status": "verified",
+        "owner_role": "development",
+        "verified_at": "2099-12-31T23:59:59+08:00",
+        "summary": "等待 TR-P4 技术评审、实现与候选",
+        "evidence_refs": [],
+        "workspace_ids": [
+          "collaboration",
+          "development"
+        ]
+      },
+      {
+        "fact_id": "FACT-MVPC-004",
+        "delivery_line_id": "mvp-b-text-ai-enhancement",
+        "fact_type": "next_action",
+        "status": "verified",
+        "owner_role": "frontend",
+        "verified_at": "2099-12-31T23:59:59+08:00",
+        "summary": "页面包与接口联调准备",
+        "evidence_refs": [],
+        "workspace_ids": [
+          "collaboration",
+          "frontend"
+        ]
+      }
+    ],
+    "evidence_targets": [
+      {
+        "type": "test_run",
+        "id": "RUN-MVP-A-20260812-001000",
+        "title": "MVP-A 独立测试报告",
+        "status": "valid",
+        "owner_role": "testing",
+        "verified_at": "2099-12-31T23:59:59+08:00",
+        "safe_summary": "P1/P2 独立测试通过（演示数据）",
+        "related_evidence_ids": []
+      },
+      {
+        "type": "test_run",
+        "id": "RUN-MVP-B-20260813-001000",
+        "title": "MVP-B v0.1 独立测试报告",
+        "status": "valid",
+        "owner_role": "testing",
+        "verified_at": "2099-12-31T23:59:59+08:00",
+        "safe_summary": "P3 独立测试通过（演示数据）",
+        "related_evidence_ids": []
+      },
+      {
+        "type": "handoff",
+        "id": "HO-PD-011",
+        "title": "P4 文字学情整理 AI 产品交接",
+        "status": "valid",
+        "owner_role": "development",
+        "verified_at": "2099-12-31T23:59:59+08:00",
+        "safe_summary": "P4 v1.4 范围交接（演示数据）",
+        "related_evidence_ids": []
+      }
+    ],
+    "declared_candidate_combinations": [
+      {
+        "delivery_line_id": "mvp-b-manual-daily-record",
+        "backend_candidate": "9e38e599",
+        "frontend_candidate": "9e38e599",
+        "migration_summary": "不适用",
+        "startup_handoff_ref": "HO-PD-013"
+      }
+    ]
+  }
 }
