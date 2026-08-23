@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable
 
 from fastapi.testclient import TestClient
 
@@ -397,8 +397,62 @@ def test_line_invalid_verified_at_warns_without_fabrication(tmp_path) -> None:
     with _client(tmp_path, dashboard_r3) as client:
         data = _workspace(client, "development")
         line_item = data["cards"]["conclusion"]["items"][0]
-        assert line_item["verified_at"] == "2026-08-23"
+        assert line_item["verified_at"] is None
         assert "R3_LINE_VERIFIED_AT_MISSING" in _codes(data)
+
+
+def test_future_verified_at_never_projects_as_verified_or_valid(tmp_path) -> None:
+    """未来时间不能借由静态演示数据伪装成当前已核对证据。"""
+    future = r3_time(hours_ago=-1)
+    dashboard_r3 = {
+        "delivery_lines": [r3_line(LINE_A, verified_at=future)],
+        "delivery_facts": [
+            r3_fact(
+                "FACT-A-1",
+                LINE_A,
+                "completed",
+                verified_at=future,
+                evidence_refs=[{"type": "test_run", "id": "RUN-P1-20260809-000001"}],
+                workspace_ids=["development"],
+            )
+        ],
+        "evidence_targets": [],
+        "declared_candidate_combinations": [],
+    }
+
+    def seed(root: Path) -> None:
+        dashboard_r3["evidence_targets"].append(
+            r3_test_run_target(
+                root,
+                run_id="RUN-P1-20260809-000001",
+                verified_at=future,
+            )
+        )
+
+    with _client(tmp_path, dashboard_r3, seed=seed) as client:
+        data = _workspace(client, "development")
+        line_item = data["cards"]["conclusion"]["items"][0]
+        fact = data["cards"]["progress"]["facts"][0]
+        evidence = data["cards"]["checked_evidence"]["items"][0]
+
+        assert line_item["verified_at"] is None
+        assert fact["verified_at"] is None
+        assert fact["status"] == "pending_check"
+        assert evidence["verified_at"] is None
+        assert evidence["status"] == "missing"
+        assert evidence["available"] is False
+        assert evidence["unavailable_reason"] == "核对日期待补录"
+        assert "R3_LINE_VERIFIED_AT_FUTURE" in _codes(data)
+        assert "R3_FACT_VERIFIED_AT_FUTURE" in _codes(data)
+
+        detail = client.get(
+            "/api/v1/project-status/dashboard/r3/evidence/test_run/"
+            "RUN-P1-20260809-000001"
+        )
+        assert detail.status_code == 200
+        assert detail.json()["data"]["status"] == "missing"
+        assert detail.json()["data"]["verified_at"] is None
+        assert detail.json()["data"]["available"] is False
 
 
 def test_completed_without_evidence_degrades_to_pending_check(tmp_path) -> None:

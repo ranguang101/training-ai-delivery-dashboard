@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import json
 import re
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -186,6 +186,7 @@ WARNING_MESSAGES = {
     "R3_INVALID_REF": "部分事实引用了非法证据编号，已安全忽略",
     "R3_FACT_STALE": "部分事实最近核对超过72小时，状态待复核",
     "R3_FACT_VERIFIED_AT_MISSING": "部分事实核对日期缺失或格式不正确，核对日期待补录",
+    "R3_FACT_VERIFIED_AT_FUTURE": "部分事实核对日期晚于当前时间，核对日期待补录",
     "R3_FACT_EVIDENCE_MISSING": "部分完成结论缺少有效证据，状态待核对",
     "R3_CANDIDATE_INCOMPLETE": "部分候选信息待补齐",
     "R3_CANDIDATE_UNMATCHED": (
@@ -199,6 +200,7 @@ WARNING_MESSAGES = {
     ),
     "R3_LINE_STALE": "部分交付线最近核对超过72小时，状态待复核",
     "R3_LINE_VERIFIED_AT_MISSING": "部分交付线核对日期缺失或格式不正确，核对日期待补录",
+    "R3_LINE_VERIFIED_AT_FUTURE": "部分交付线核对日期晚于当前时间，核对日期待补录",
     "R3_LINE_NO_FACTS": "该交付线尚未建立监控事实",
 }
 
@@ -241,11 +243,27 @@ def _parse_verified_at(value: Any) -> datetime | None:
 
 
 def _verified_at_stale(value: Any) -> bool | None:
-    """True=超过72小时；False=未超；None=缺失或格式错误。"""
+    """True=超过72小时；False=未超；None=缺失、格式错误或未来时间。"""
     parsed = _parse_verified_at(value)
     if parsed is None:
         return None
-    return datetime.now(timezone.utc) - parsed > STALE_AFTER
+    now = datetime.now(UTC)
+    if parsed > now:
+        return None
+    return now - parsed > STALE_AFTER
+
+
+def _verified_at_is_future(value: Any) -> bool:
+    """未来核对时间不可作为已核对证据或交付结论的依据。"""
+    parsed = _parse_verified_at(value)
+    return parsed is not None and parsed > datetime.now(UTC)
+
+
+def _safe_verified_at(value: Any) -> str | None:
+    """不向浏览器投影无效或未来的核对时间原值。"""
+    if _parse_verified_at(value) is None or _verified_at_is_future(value):
+        return None
+    return value if isinstance(value, str) else None
 
 
 def _test_run_asset_resolves(run_id: str, project_root: Path) -> bool:
@@ -682,7 +700,10 @@ def _evidence_availability(
         return False, "证据暂不可查看"
     if target["status"] == "stale":
         return False, "待复核"
-    if _parse_verified_at(target["verified_at"]) is None:
+    if (
+        _parse_verified_at(target["verified_at"]) is None
+        or _verified_at_is_future(target["verified_at"])
+    ):
         return False, "核对日期待补录"
     if _verified_at_stale(target["verified_at"]):
         return False, "待复核"
@@ -767,7 +788,7 @@ def _project_fact(
         "status": fact["status"],
         "owner_role": fact["owner_role"],
         "owner_role_label": OWNER_ROLE_LABELS[fact["owner_role"]],
-        "verified_at": fact["verified_at"],
+        "verified_at": _safe_verified_at(fact["verified_at"]),
         "summary": fact["summary"],
         "evidence_refs": list(fact["evidence_refs"]),
         "workspace_ids": list(fact["workspace_ids"]),
@@ -786,7 +807,11 @@ def _project_fact(
 
     stale_flag = _verified_at_stale(fact["verified_at"])
     if stale_flag is None:
-        warnings.append("R3_FACT_VERIFIED_AT_MISSING")
+        warnings.append(
+            "R3_FACT_VERIFIED_AT_FUTURE"
+            if _verified_at_is_future(fact["verified_at"])
+            else "R3_FACT_VERIFIED_AT_MISSING"
+        )
 
     needs_evidence = fact["fact_type"] == "completed" or (
         fact["fact_type"] == "candidate" and candidate_status == "fixed"
@@ -877,7 +902,11 @@ def _project_line(
         warnings.append("R3_LINE_TRIAL_UNVERIFIED")
     line_stale = _verified_at_stale(line["verified_at"])
     if line_stale is None:
-        warnings.append("R3_LINE_VERIFIED_AT_MISSING")
+        warnings.append(
+            "R3_LINE_VERIFIED_AT_FUTURE"
+            if _verified_at_is_future(line["verified_at"])
+            else "R3_LINE_VERIFIED_AT_MISSING"
+        )
     elif line_stale:
         warnings.append("R3_LINE_STALE")
     return {
@@ -891,7 +920,7 @@ def _project_line(
         "next_gate_summary": line["next_gate_summary"],
         "can_enter_product_acceptance": flags["can_enter_product_acceptance"],
         "can_enter_controlled_trial": flags["can_enter_controlled_trial"],
-        "verified_at": line["verified_at"],
+        "verified_at": _safe_verified_at(line["verified_at"]),
     }
 
 
@@ -920,14 +949,20 @@ def _project_evidence(
             "available": False,
             "unavailable_reason": reason,
         }
+    safe_verified_at = _safe_verified_at(target["verified_at"])
+    safe_status = target["status"]
+    if safe_verified_at is None:
+        safe_status = "missing"
+    elif _verified_at_stale(target["verified_at"]):
+        safe_status = "stale"
     return {
         "type": target["type"],
         "id": target["id"],
         "title": target["title"],
-        "status": target["status"],
+        "status": safe_status,
         "owner_role": target["owner_role"],
         "owner_role_label": OWNER_ROLE_LABELS[target["owner_role"]],
-        "verified_at": target["verified_at"],
+        "verified_at": safe_verified_at,
         "safe_summary": target["safe_summary"],
         "available": available,
         "unavailable_reason": reason,
@@ -1076,14 +1111,20 @@ def load_r3_evidence_detail(
     available, reason = _evidence_availability(
         target, project_root=project_root, cache={}
     )
+    safe_verified_at = _safe_verified_at(target["verified_at"])
+    safe_status = target["status"]
+    if safe_verified_at is None:
+        safe_status = "missing"
+    elif _verified_at_stale(target["verified_at"]):
+        safe_status = "stale"
     return {
         "type": target["type"],
         "id": target["id"],
         "title": target["title"],
-        "status": target["status"],
+        "status": safe_status,
         "owner_role": target["owner_role"],
         "owner_role_label": OWNER_ROLE_LABELS[target["owner_role"]],
-        "verified_at": target["verified_at"],
+        "verified_at": safe_verified_at,
         "safe_summary": target["safe_summary"],
         "related_evidence_ids": list(target["related_evidence_ids"]),
         "available": available,
