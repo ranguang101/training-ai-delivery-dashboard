@@ -141,7 +141,9 @@ def test_safe_workspace_pages_use_new_panel_only_routes() -> None:
 
     assert overview.status_code == 200
     assert detail.status_code == 200
-    assert "data-safe-workspace-overview" in overview.text
-    assert 'data-safe-workspace-detail="frontend"' in detail.text
+    assert 'data-r3-workspace="collaboration"' in overview.text
+    assert 'data-r3-workspace="frontend"' in detail.text
+    assert "data-safe-workspace-overview" not in overview.text
+    assert "data-safe-workspace-detail" not in detail.text
     assert "project-status.json" not in overview.text
     assert "project-status.json" not in detail.text

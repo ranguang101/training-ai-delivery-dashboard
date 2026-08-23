@@ -4,8 +4,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="color-scheme" content="light">
-    <title>工作区 | 项目交付看板</title>
-    <link rel="stylesheet" href="{{ url_for('static', path='/project-status.css') }}?v=safe-workspaces-r1">
+    <title>协作总览 | 项目交付看板</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='/project-status.css') }}?v=r3-lite-v1">
   </head>
   <body data-dashboard-mode="read_only_local">
     <header class="topbar">
@@ -22,25 +22,27 @@
     </header>
 
     <main>
-      <section class="safe-workspace-hero" aria-labelledby="safe-workspace-title">
+      <section class="safe-workspace-hero" aria-labelledby="r3-workspace-title">
         <div>
-          <h2 id="safe-workspace-title">工作区</h2>
-          <p>按负责人查看当前状态、下一步、开放门禁和已核对证据。这里不展示原始交接、报告、路径、环境或业务数据。</p>
+          <p class="safe-workspace-back"><a href="/project-status" data-r3-back-overview>返回项目总览</a></p>
+          <h2 id="r3-workspace-title">协作总览</h2>
+          <p>轻量监控当前交付线：跨角色交接、共同阻断与已核对证据。这里不展示原始报告、路径、环境、日志或业务数据。</p>
         </div>
       </section>
 
-      <section class="section-block safe-workspace-section" aria-labelledby="safe-workspace-list-title">
+      <section class="section-block safe-workspace-section r3-workspace-section" aria-labelledby="r3-monitor-title">
         <div class="section-heading">
-          <div><h2 id="safe-workspace-list-title">安全协作摘要</h2></div>
-          <p>缺失信息会明确标记为待核对，不根据历史状态推断结论。</p>
+          <div><h2 id="r3-monitor-title">轻量监控</h2></div>
+          <p>缺失、冲突或过期的信息会明确标记，不根据历史状态推断通过或准出结论。</p>
         </div>
-        <div data-safe-workspace-overview aria-live="polite" aria-busy="true">
-          <p class="safe-workspace-loading">正在加载工作区安全摘要…</p>
+        <div data-r3-workspace="collaboration" aria-live="polite" aria-busy="true">
+          <p class="safe-workspace-loading">正在加载交付监控信息…</p>
         </div>
       </section>
     </main>
 
     <footer><span>仅显示经服务端安全投影批准的协作信息。</span></footer>
-    <script src="{{ url_for('static', path='/project-status.js') }}?v=safe-workspaces-r1" defer></script>
+    <script src="{{ url_for('static', path='/project-status.js') }}?v=r3-lite-v1" defer></script>
+    <script src="{{ url_for('static', path='/project-status-r3.js') }}?v=r3-lite-v1" defer></script>
   </body>
 </html>

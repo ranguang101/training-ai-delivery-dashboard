@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="color-scheme" content="light">
     <title>{{ workspace_label }} | 项目交付看板</title>
-    <link rel="stylesheet" href="{{ url_for('static', path='/project-status.css') }}?v=safe-workspaces-r1">
+    <link rel="stylesheet" href="{{ url_for('static', path='/project-status.css') }}?v=r3-lite-v1">
   </head>
   <body data-dashboard-mode="read_only_local">
     <header class="topbar">
@@ -20,23 +20,27 @@
     </header>
 
     <main>
-      <section class="safe-workspace-hero" aria-labelledby="safe-workspace-detail-title">
+      <section class="safe-workspace-hero" aria-labelledby="r3-workspace-title">
         <div>
-          <p class="safe-workspace-back"><a href="/project-status/workspaces">返回工作区</a></p>
-          <h2 id="safe-workspace-detail-title">{{ workspace_label }}</h2>
-          <p>本页只展示关联交付线、当前工作、下一步、开放门禁与受控证据链接。</p>
+          <p class="safe-workspace-back"><a href="/project-status" data-r3-back-overview>返回项目总览</a></p>
+          <h2 id="r3-workspace-title">{{ workspace_label }}</h2>
+          <p>轻量监控当前交付线：候选、责任、门禁与已核对证据。本页只展示服务端安全投影，不展示原始资料或业务数据。</p>
         </div>
       </section>
 
-      <section class="section-block safe-workspace-section" aria-labelledby="safe-workspace-content-title">
-        <div class="section-heading"><div><h2 id="safe-workspace-content-title">当前协作信息</h2></div></div>
-        <div data-safe-workspace-detail="{{ workspace_id }}" aria-live="polite" aria-busy="true">
-          <p class="safe-workspace-loading">正在加载工作区安全摘要…</p>
+      <section class="section-block safe-workspace-section r3-workspace-section" aria-labelledby="r3-monitor-title">
+        <div class="section-heading">
+          <div><h2 id="r3-monitor-title">轻量监控</h2></div>
+          <p>缺失、冲突或过期的信息会明确标记，不根据历史状态推断通过或准出结论。</p>
+        </div>
+        <div data-r3-workspace="{{ workspace_id }}" aria-live="polite" aria-busy="true">
+          <p class="safe-workspace-loading">正在加载交付监控信息…</p>
         </div>
       </section>
     </main>
 
     <footer><span>仅显示经服务端安全投影批准的协作信息。</span></footer>
-    <script src="{{ url_for('static', path='/project-status.js') }}?v=safe-workspaces-r1" defer></script>
+    <script src="{{ url_for('static', path='/project-status.js') }}?v=r3-lite-v1" defer></script>
+    <script src="{{ url_for('static', path='/project-status-r3.js') }}?v=r3-lite-v1" defer></script>
   </body>
 </html>

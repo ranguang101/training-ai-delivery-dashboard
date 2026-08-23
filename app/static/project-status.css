@@ -902,3 +902,153 @@ footer a { color: var(--green); font-weight: 700; }
   .automation-hero { padding: 26px 20px; border-radius: 18px; }
   .automation-hero h2 { max-width: none; font-size: clamp(28px, 9vw, 38px); }
 }
+
+/* ---- R3 轻量监控：四卡布局与受控证据详情投影 ---- */
+.r3-workspace-section { border-color: #bfd3c6; }
+
+.r3-controls {
+  display: flex; align-items: flex-end; flex-wrap: wrap; gap: 16px 22px;
+  padding: 18px; margin-bottom: 14px; background: #f3f7f4;
+  border: 1px solid var(--line); border-radius: 14px;
+}
+.r3-line-selector { display: grid; gap: 7px; min-width: 0; }
+.r3-line-selector label { color: #315d4b; font-size: 12px; font-weight: 900; }
+.r3-line-selector select {
+  min-width: 220px; max-width: 100%; padding: 9px 12px; font: inherit; font-size: 14px;
+  color: var(--ink); background: #fff; border: 1px solid #c3d2c7; border-radius: 10px;
+}
+.r3-current-state { display: grid; gap: 0; margin: 0; flex: 1 1 auto; min-width: 240px; }
+.r3-current-state .r3-meta-row { grid-template-columns: 110px minmax(0, 1fr); }
+.r3-back-overview {
+  flex: 0 0 auto; padding: 9px 14px; color: var(--green); background: #fff;
+  border: 1px solid #b9cfc1; border-radius: 10px; font: inherit; font-size: 13px;
+  font-weight: 900; text-decoration: none; cursor: pointer;
+}
+.r3-back-overview:hover { background: var(--green-soft); }
+
+.r3-card-grid { display: grid; gap: 18px; }
+.r3-card {
+  min-width: 0; padding: 24px; background: #fcfdfb;
+  border: 1px solid #cfddd3; border-radius: 16px;
+}
+.r3-card-title { margin: 0 0 18px; font-size: 19px; letter-spacing: -0.01em; }
+.r3-card-body { min-width: 0; }
+.r3-empty { margin: 0; padding: 16px; color: var(--muted); background: #f3f6f2; border-radius: 12px; }
+
+.r3-conclusion-item, .r3-fact-row, .r3-candidate-group, .r3-evidence-item {
+  min-width: 0; padding: 16px; background: #f5f8f5; border-radius: 13px;
+}
+.r3-fact-list, .r3-evidence-list { display: grid; gap: 11px; margin: 0; padding: 0; list-style: none; }
+.r3-conclusion-item + .r3-conclusion-item { margin-top: 11px; }
+.r3-item-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.r3-item-heading h4 { margin: 0; font-size: 17px; letter-spacing: -0.01em; overflow-wrap: anywhere; }
+.r3-scope-summary { margin: 6px 0 0; color: var(--muted); font-size: 12px; line-height: 1.55; overflow-wrap: anywhere; }
+.r3-conclusion { margin: 13px 0 0; color: #294037; font-size: 14px; line-height: 1.68; overflow-wrap: anywhere; }
+
+.r3-meta-row { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 12px; margin: 0; }
+.r3-meta-row dt { color: #65736b; font-size: 12px; font-weight: 800; }
+.r3-meta-row dd { margin: 0; color: #294037; font-size: 13px; line-height: 1.55; overflow-wrap: anywhere; }
+.r3-conclusion-item > .r3-meta-row, .r3-candidate-fields .r3-meta-row {
+  padding: 7px 0; border-bottom: 1px dashed #dbe4dd;
+}
+
+.r3-status-pill {
+  flex: 0 0 auto; padding: 5px 9px; border-radius: 99px; font-size: 11px;
+  font-weight: 900; white-space: nowrap; text-align: center;
+}
+.r3-status-line { color: #8a5417; background: var(--amber-soft); }
+.r3-status-verified { color: #205e47; background: var(--green-soft); }
+.r3-status-pending_check { color: #8a5417; background: var(--amber-soft); }
+.r3-status-stale { color: #842d2d; background: var(--red-soft); }
+.r3-status-missing { color: #6a6f6b; background: #ecefec; }
+.r3-status-neutral { color: #5a6761; background: #ecefec; }
+
+.r3-fact-type { flex: 0 0 auto; padding: 5px 9px; border-radius: 99px; font-size: 11px; font-weight: 900; white-space: nowrap; }
+.r3-type-completed { color: #205e47; background: var(--green-soft); }
+.r3-type-in_progress { color: #315d7d; background: var(--blue-soft); }
+.r3-type-next_action { color: #5a4a8a; background: #eae6f5; }
+.r3-type-blocked { color: #842d2d; background: var(--red-soft); }
+.r3-type-candidate { color: #8a5417; background: var(--amber-soft); }
+
+.r3-fact-summary { margin: 11px 0 0; color: #294037; font-size: 13px; line-height: 1.62; overflow-wrap: anywhere; }
+.r3-fact-meta { display: block; margin-top: 8px; color: #78837d; font-size: 11px; line-height: 1.55; overflow-wrap: anywhere; }
+
+.r3-candidate-fields { margin-top: 12px; }
+.r3-candidate-status-row { padding-top: 9px !important; border-bottom: 0 !important; }
+.r3-candidate-status-row dd { font-weight: 900; color: var(--ink); }
+.r3-candidate-note { margin: 10px 0 0; padding: 9px 11px; color: #7e4210; background: var(--amber-soft); border-radius: 9px; font-size: 12px; line-height: 1.55; overflow-wrap: anywhere; }
+.r3-candidate-conflict { color: #842d2d; background: var(--red-soft); }
+
+.r3-item-actions { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 12px; }
+.r3-action-link {
+  padding: 8px 12px; color: var(--green); background: #fff;
+  border: 1px solid #b9cfc1; border-radius: 10px; font: inherit; font-size: 12px;
+  font-weight: 900; text-decoration: none; cursor: pointer;
+}
+.r3-action-link:hover:not(:disabled) { background: var(--green-soft); }
+.r3-action-link:disabled { color: #9aa49e; background: #f0f3f0; border-color: #dfe5df; cursor: not-allowed; }
+
+.r3-evidence-item { display: grid; gap: 8px; align-content: start; }
+.r3-evidence-item > .r3-status-pill { justify-self: start; }
+.r3-evidence-title { color: #294037; font-size: 13px; line-height: 1.5; overflow-wrap: anywhere; }
+.r3-evidence-link {
+  justify-self: start; padding: 8px 12px; color: var(--green); background: #fff;
+  border: 1px solid #b9cfc1; border-radius: 10px; font: inherit; font-size: 13px;
+  font-weight: 900; text-align: left; cursor: pointer; overflow-wrap: anywhere;
+}
+.r3-evidence-link:hover:not(:disabled) { background: var(--green-soft); }
+.r3-evidence-link:disabled { color: #9aa49e; background: #f0f3f0; border-color: #dfe5df; cursor: not-allowed; }
+.r3-evidence-summary { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.58; overflow-wrap: anywhere; }
+
+.r3-alert { margin-bottom: 14px; }
+.r3-load-failure {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 14px;
+  padding: 18px; color: var(--red); background: var(--red-soft);
+  border-radius: 13px;
+}
+.r3-load-failure p { flex: 1 1 260px; margin: 0; line-height: 1.65; }
+
+.r3-dialog-overlay {
+  position: fixed; inset: 0; z-index: 60; display: grid; place-items: center;
+  padding: 16px; background: rgba(23, 36, 31, 0.45);
+}
+.r3-dialog {
+  width: min(100%, 560px); max-height: min(84vh, 640px); overflow: auto;
+  padding: 22px; background: var(--panel); border: 1px solid var(--line);
+  border-radius: 16px; box-shadow: var(--shadow);
+}
+.r3-dialog-title { margin: 0 0 14px; font-size: 18px; }
+.r3-dialog-fields .r3-meta-row { padding: 8px 0; border-bottom: 1px dashed #dbe4dd; }
+.r3-dialog-notice { margin: 0 0 12px; padding: 11px 13px; color: #842d2d; background: var(--red-soft); border-radius: 10px; font-size: 13px; line-height: 1.6; }
+.r3-dialog-actions { display: flex; justify-content: flex-end; margin-top: 16px; }
+.r3-dialog-close {
+  padding: 9px 16px; color: var(--green); background: var(--green-soft);
+  border: 1px solid #b9cfc1; border-radius: 10px; font: inherit; font-size: 13px;
+  font-weight: 900; cursor: pointer;
+}
+.r3-dialog-close:hover { background: #cfe4d8; }
+
+.r3-line-focused {
+  outline: 3px solid var(--blue); outline-offset: 4px;
+  box-shadow: 0 0 0 8px rgba(49, 93, 125, 0.12);
+}
+
+@media (max-width: 900px) {
+  .r3-controls { align-items: flex-start; flex-direction: column; }
+  .r3-current-state { width: 100%; }
+  .r3-current-state .r3-meta-row { grid-template-columns: 1fr; gap: 4px; }
+  .r3-meta-row { grid-template-columns: 96px minmax(0, 1fr); }
+}
+
+@media (max-width: 600px) {
+  .r3-controls { padding: 14px; gap: 13px; }
+  .r3-line-selector { width: 100%; }
+  .r3-line-selector select { width: 100%; min-width: 0; }
+  .r3-current-state { min-width: 0; }
+  .r3-card { padding: 17px 14px; }
+  .r3-card-title { font-size: 17px; }
+  .r3-item-heading { flex-direction: column; gap: 8px; }
+  .r3-meta-row { grid-template-columns: 1fr; gap: 4px; padding: 6px 0; }
+  .r3-conclusion-item, .r3-fact-row, .r3-candidate-group, .r3-evidence-item { padding: 13px; }
+  .r3-load-failure { align-items: flex-start; flex-direction: column; }
+}
