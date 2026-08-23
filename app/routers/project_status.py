@@ -172,6 +172,42 @@ def quality_requirement_detail(
     return {"success": True, "data": data}
 
 
+def _render_quality_requirements(
+    request: Request, *, requirement_id: str | None = None
+) -> HTMLResponse:
+    return _templates_for(request).TemplateResponse(
+        request,
+        "safe_quality_requirements.html",
+        {"quality_requirement_id": requirement_id},
+    )
+
+
+@router.get(
+    "/project-status/tests",
+    response_class=HTMLResponse,
+    include_in_schema=False,
+)
+@router.get(
+    "/project-status/tests/requirements",
+    response_class=HTMLResponse,
+    include_in_schema=False,
+)
+def quality_requirements_page(request: Request) -> HTMLResponse:
+    """R4 quality workspace entry; it only loads the controlled lifecycle API."""
+    _ensure_enabled()
+    return _render_quality_requirements(request)
+
+
+@router.get(
+    "/project-status/tests/requirements/{quality_requirement_id}",
+    response_class=HTMLResponse,
+    include_in_schema=False,
+)
+def quality_requirement_detail_page(quality_requirement_id: str, request: Request) -> HTMLResponse:
+    _ensure_enabled()
+    return _render_quality_requirements(request, requirement_id=quality_requirement_id)
+
+
 @router.get("/project-status", response_class=HTMLResponse, include_in_schema=False)
 def project_status_page(request: Request, line: str | None = None) -> RedirectResponse:
     """R3 has one safe collaboration overview; retain the historical entry URL."""

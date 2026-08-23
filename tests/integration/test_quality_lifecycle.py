@@ -169,3 +169,23 @@ def test_missing_section_is_safe_empty_projection_and_unknown_requirement_is_404
         missing = client.get("/api/v1/project-status/quality-requirements/QR-NOT-FOUND")
         assert missing.status_code == 404
         assert missing.json()["detail"] == "QUALITY_REQUIREMENT_NOT_FOUND"
+
+
+def test_quality_workspace_pages_preserve_safe_r3_routes_and_use_controlled_r4_client(
+    tmp_path,
+) -> None:
+    root = _root(tmp_path)
+    with _client(root) as client:
+        for path in (
+            "/project-status/tests",
+            "/project-status/tests/requirements?requirement=QR-MVP-A&line=mvp-a-management-foundation",
+            "/project-status/tests/requirements/QR-MVP-B-MANUAL?line=mvp-b-manual-daily-record",
+            "/project-status/workspaces/testing",
+        ):
+            response = client.get(path)
+            assert response.status_code == 200
+            assert "项目交付看板" in response.text
+        page = client.get("/project-status/tests/requirements")
+        assert "data-quality-requirements" in page.text
+        assert "quality-lifecycle.js" in page.text
+        assert "/api/v1/project-status/quality-requirements" not in page.text

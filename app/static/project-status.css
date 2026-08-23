@@ -549,6 +549,99 @@ footer {
 .r3-dialog-actions { display: flex; justify-content: flex-end; margin-top: 16px; }
 .r3-dialog-close { padding: 9px 16px; font-size: 13px; }
 
+/* R4：质量生命周期是质量工作区的受控扩展，沿用 R3 的轻量操作界面。 */
+.qw-hero { min-height: 250px; }
+.qw-section { border-color: #bfd3c6; }
+.qw-alert { margin-bottom: 16px; }
+
+.qw-tabs {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  margin: 0 0 18px;
+  padding: 4px;
+  background: #eef4ef;
+  border-radius: 12px;
+}
+
+.qw-tabs a {
+  flex: 0 0 auto;
+  padding: 10px 13px;
+  color: #496057;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 900;
+  text-decoration: none;
+}
+
+.qw-tabs a:hover,
+.qw-tabs a.is-active { color: #173d30; background: #fff; box-shadow: 0 3px 10px rgba(25, 49, 39, 0.08); }
+
+.qw-readiness {
+  display: grid;
+  gap: 11px;
+  margin-bottom: 18px;
+  padding: 20px;
+  background: #f3f7f4;
+  border: 1px solid #c8d9cd;
+  border-radius: 15px;
+}
+
+.qw-readiness h3 { margin: 0; font-size: 20px; letter-spacing: -0.02em; }
+.qw-readiness p { max-width: 70ch; margin: 0; color: #40594e; font-size: 14px; line-height: 1.65; }
+.qw-readiness-row { display: flex; align-items: center; flex-wrap: wrap; gap: 9px; font-size: 13px; font-weight: 800; }
+
+.qw-card-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.qw-card {
+  display: flex;
+  min-width: 0;
+  min-height: 245px;
+  flex-direction: column;
+  gap: 16px;
+  padding: 22px;
+  background: #fcfdfb;
+  border: 1px solid #cfddd3;
+  border-radius: 16px;
+}
+.qw-card h3 { margin: 0; font-size: 18px; letter-spacing: -0.015em; }
+.qw-card-content { min-width: 0; }
+.qw-metrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
+.qw-metric { display: grid; gap: 3px; padding: 10px; background: #f2f6f3; border-radius: 10px; }
+.qw-metric strong { color: #1c4e3c; font-size: 18px; overflow-wrap: anywhere; }
+.qw-metric span { color: var(--muted); font-size: 11px; font-weight: 800; }
+.qw-card-note,
+.qw-card-boundary { margin: 13px 0 0; color: var(--muted); font-size: 12px; line-height: 1.6; overflow-wrap: anywhere; }
+.qw-card-boundary { color: #7e4210; font-weight: 900; }
+.qw-report-id { margin: 0; color: #1e4e3d; font-size: 15px; font-weight: 900; overflow-wrap: anywhere; }
+.qw-card-link { align-self: flex-start; margin-top: auto; color: var(--green); font-size: 13px; font-weight: 900; text-decoration: none; }
+.qw-card-link[aria-disabled="true"] { color: #8b9790; cursor: not-allowed; }
+
+.qw-detail-sections { display: grid; gap: 18px; }
+.qw-detail-section { padding-top: 26px; scroll-margin-top: 20px; border-top: 1px solid #dce5df; }
+.qw-detail-section h3 { margin: 0 0 14px; font-size: 19px; letter-spacing: -0.015em; }
+.qw-detail-list { display: grid; gap: 11px; }
+.qw-detail-item { min-width: 0; padding: 16px; background: #f5f8f5; border-radius: 13px; }
+.qw-detail-item h4 { margin: 0 0 10px; font-size: 15px; overflow-wrap: anywhere; }
+.qw-detail-item p { margin: 9px 0 0; color: #40594e; font-size: 13px; line-height: 1.65; overflow-wrap: anywhere; }
+.qw-detail-item .r3-status-pill { margin-bottom: 3px; }
+.qw-filter { display: grid; width: min(100%, 270px); gap: 6px; margin: 0 0 14px; color: #315d4b; font-size: 12px; font-weight: 900; }
+.qw-filter select { width: 100%; padding: 9px 11px; color: var(--ink); background: #fff; border: 1px solid #c3d2c7; border-radius: 9px; }
+.qw-trace { display: grid; gap: 0; margin: 0; }
+.qw-trace > div { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 12px; padding: 9px 0; border-bottom: 1px dashed #dbe4dd; }
+.qw-trace dt { color: #65736b; font-size: 12px; font-weight: 900; }
+.qw-trace dd { margin: 0; color: #294037; font-size: 13px; line-height: 1.55; overflow-wrap: anywhere; }
+.qw-status-ready_for_product_acceptance,
+.qw-status-reviewed { color: #205e47; background: var(--green-soft); }
+.qw-status-blocked,
+.qw-status-failed { color: #842d2d; background: var(--red-soft); }
+.qw-status-report_pending,
+.qw-status-designing,
+.qw-status-passed_pending_human { color: #8a5417; background: var(--amber-soft); }
+
+@media (max-width: 700px) {
+  .qw-card-grid { grid-template-columns: 1fr; }
+}
+
 @media (max-width: 900px) {
   .topbar { align-items: flex-start; flex-direction: column; padding-block: 22px; }
   .topbar-actions { align-items: flex-start; flex-direction: column; width: 100%; gap: 14px; }
@@ -580,6 +673,10 @@ footer {
   .r3-candidate-group,
   .r3-evidence-item { padding: 13px; }
   .r3-load-failure { align-items: flex-start; flex-direction: column; }
+  .qw-card { min-height: 0; padding: 17px 14px; }
+  .qw-readiness { padding: 16px; }
+  .qw-tabs { margin-inline: -2px; }
+  .qw-trace > div { grid-template-columns: 1fr; gap: 4px; }
 }
 
 @media (max-width: 380px) {

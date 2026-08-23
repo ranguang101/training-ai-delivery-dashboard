@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light">
+    <title>按需求质量追踪 | 项目交付看板</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='/project-status.css') }}?v=r4-quality-v1">
+  </head>
+  <body data-dashboard-mode="read_only_local">
+    <header class="topbar">
+      <div><h1>项目交付看板</h1></div>
+      <div class="topbar-actions">
+        {% include "_project_nav.html" %}
+        <div class="sync-panel" aria-live="polite">
+          <span class="sync-dot"></span>
+          <div><strong id="sync-status">自动同步中</strong><span>仅显示安全摘要</span></div>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="safe-workspace-hero qw-hero" aria-labelledby="qw-title">
+        <div>
+          <p class="safe-workspace-back"><a href="/project-status/workspaces/testing">返回质量工作区</a></p>
+          <h2 id="qw-title">按需求质量追踪</h2>
+          <p>按交付线查看正式 Case、辅助自动化、缺陷与最终测试报告。辅助自动化不等于正式准出。</p>
+        </div>
+      </section>
+
+      <section class="section-block qw-section" aria-labelledby="qw-heading">
+        <div class="section-heading">
+          <div><h2 id="qw-heading">质量生命周期</h2></div>
+          <p>缺失、阻塞、候选不一致或过期核对会明确降级；页面不展示原始报告、日志或环境信息。</p>
+        </div>
+        <div
+          data-quality-requirements
+          data-quality-requirement-id="{{ quality_requirement_id or '' }}"
+          aria-live="polite"
+          aria-busy="true"
+        >
+          <p class="safe-workspace-loading">正在加载质量追踪信息…</p>
+        </div>
+      </section>
+    </main>
+
+    <footer><span>正式 Case、辅助自动化与最终测试结论分别管理，不相互替代。</span></footer>
+    <script src="{{ url_for('static', path='/dashboard-shell.js') }}?v=r3-lite-v2" defer></script>
+    <script src="{{ url_for('static', path='/quality-lifecycle.js') }}?v=r4-quality-v1" defer></script>
+  </body>
+</html>
