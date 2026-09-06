@@ -567,7 +567,8 @@ def _quality(
     )
 
 
-P1_CASE_IDS = frozenset({
+# Fallback ID mappings used ONLY when raw JSON metadata lacks explicit module or status fields
+DEFAULT_P1_FALLBACK_IDS = frozenset({
     "MVP-A-MAIN-001",
     "MVP-A-CASE-R3-001", "MVP-A-CASE-R3-002", "MVP-A-CASE-R3-003",
     "MVP-A-CASE-R3-004", "MVP-A-CASE-R3-005", "MVP-A-CASE-R3-006",
@@ -579,7 +580,7 @@ P1_CASE_IDS = frozenset({
     "MVP-A-COMPAT-004",
 })
 
-BLOCKED_CASE_IDS = frozenset({
+DEFAULT_BLOCKED_FALLBACK_IDS = frozenset({
     "MVP-A-CASE-R3-003", "MVP-A-CASE-R3-014",
     "MVP-A-MAIN-002", "MVP-A-MAIN-003", "MVP-A-CASE-R3-024", "MVP-A-CASE-R3-028",
 })
@@ -603,9 +604,24 @@ def _dashboard_v2(
         raw_title = str(raw.get("title") or "")
         raw_fids = [str(fid) for fid in raw.get("feature_ids", []) if isinstance(fid, str)]
 
-        # Determine branch (mvp-a vs mvp-b)
-        if cid.startswith("MVP-B") or any("P3" in fid for fid in raw_fids):
+        # 1. Determine branch (mvp-a vs mvp-b vs others)
+        explicit_branch = raw.get("branch")
+        if isinstance(explicit_branch, str) and explicit_branch.strip():
+            branch = explicit_branch.strip()
+        elif cid.startswith("MVP-B") or any("P3" in fid for fid in raw_fids):
             branch = "mvp-b"
+        elif cid.startswith("MVP-A") or any("P1" in fid or "P2" in fid for fid in raw_fids):
+            branch = "mvp-a"
+        else:
+            branch = "mvp-a"
+
+        # 2. Determine module & module_name
+        explicit_mod = raw.get("module")
+        explicit_mod_name = raw.get("module_name")
+        if isinstance(explicit_mod, str) and explicit_mod.strip():
+            mod = explicit_mod.strip()
+            mod_name = str(explicit_mod_name).strip() if explicit_mod_name else mod
+        elif branch == "mvp-b":
             if "REV" in cid or "review" in raw_title.lower() or "审核" in raw_title:
                 mod = "P3-review"
                 mod_name = "P3 共享审核"
@@ -613,14 +629,13 @@ def _dashboard_v2(
                 mod = "P3-record"
                 mod_name = "P3 随笔记录"
         else:
-            branch = "mvp-a"
             p1_features = {
                 "P1-ACCOUNT", "FP-MVPA21-R001", "FP-MVPA21-R002",
                 "FP-MVPA21-R003", "FP-MVPA21-R004", "FP-MVPA21-R005",
             }
             is_p1 = (
-                cid in P1_CASE_IDS
-                or any(fid in p1_features for fid in raw_fids)
+                any(fid in p1_features for fid in raw_fids)
+                or cid in DEFAULT_P1_FALLBACK_IDS
                 or any(
                     k in raw_title
                     for k in ("账号", "角色", "权限", "登录", "改密", "机构", "首次改密")
@@ -634,14 +649,22 @@ def _dashboard_v2(
             auto_label = "Playwright 自动化"
         elif akind == "hybrid":
             auto_label = "人工 / 混合"
+        elif isinstance(akind, str) and akind.strip():
+            auto_label = akind.strip()
         else:
             auto_label = "Pytest 集成"
 
-        is_blocked = (
-            cid in BLOCKED_CASE_IDS
-            or raw.get("case_status") in {"blocked", "failed"}
-            or "阻塞" in str(raw.get("actual_result", ""))
-        )
+        # 3. Determine status: explicit case_status has absolute priority over static fallback list
+        raw_status = str(raw.get("case_status") or "").strip().lower()
+        if raw_status in {"passed", "pass", "success"}:
+            is_blocked = False
+        elif raw_status in {"blocked", "failed", "block"}:
+            is_blocked = True
+        elif "阻塞" in str(raw.get("actual_result", "")):
+            is_blocked = True
+        else:
+            is_blocked = (cid in DEFAULT_BLOCKED_FALLBACK_IDS)
+
         status = "blocked" if is_blocked else "passed"
         status_label = "阻塞 (收口中)" if is_blocked else "通过"
 
@@ -691,7 +714,7 @@ def _dashboard_v2(
     mvp_a_total = len(mvp_a_cases)
     mvp_a_passed = len([c for c in mvp_a_cases if c["status"] == "passed"])
     mvp_a_blocked = len([c for c in mvp_a_cases if c["status"] == "blocked"])
-    mvp_a_rate = round(mvp_a_passed / mvp_a_total * 100, 1) if mvp_a_total > 0 else 87.2
+    mvp_a_rate = round(mvp_a_passed / mvp_a_total * 100, 1) if mvp_a_total > 0 else 0.0
 
     prd_candidates = (
         v.get("feishu_url")

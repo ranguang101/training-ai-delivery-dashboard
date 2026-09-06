@@ -1,6 +1,6 @@
 /**
  * Fusion Dashboard v2.0 - Plane + MeterSphere Fusion Architecture Controller
- * Context-aware Feishu links & Toast Interception Patch
+ * Decoupled, Reactive & Robust Implementation
  */
 
 (function () {
@@ -11,9 +11,12 @@
   let currentModuleFilter = 'all';
   let currentStatusFilter = 'all';
   let currentSearchText = '';
+  let currentRevision = document.body.dataset.dashboardRevision || null;
+  let pollTimer = null;
+  let toastTimer = null;
 
   function escapeHtml(str) {
-    if (!str) return '';
+    if (str === undefined || str === null) return '';
     return String(str)
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
@@ -31,6 +34,30 @@
       container.className = 'toast-container';
       document.body.appendChild(container);
     }
+
+    // 防抖与去重：如果已有相同内容的气泡，重置动画与定时器，避免快速连击产生堆叠
+    const existing = container.querySelector('.toast-message');
+    if (existing && existing.textContent === msg) {
+      if (toastTimer) clearTimeout(toastTimer);
+      existing.classList.remove('is-visible');
+      requestAnimationFrame(function () {
+        existing.classList.add('is-visible');
+      });
+      toastTimer = setTimeout(function () {
+        existing.classList.remove('is-visible');
+        setTimeout(function () {
+          if (existing.parentNode) existing.parentNode.removeChild(existing);
+        }, 300);
+      }, duration);
+      return;
+    }
+
+    // 清理前置 Toast 保持单气泡整洁
+    while (container.firstChild) {
+      container.removeChild(container.firstChild);
+    }
+    if (toastTimer) clearTimeout(toastTimer);
+
     const toast = document.createElement('div');
     toast.className = 'toast-message';
     toast.textContent = msg;
@@ -40,7 +67,7 @@
       toast.classList.add('is-visible');
     });
 
-    setTimeout(function () {
+    toastTimer = setTimeout(function () {
       toast.classList.remove('is-visible');
       setTimeout(function () {
         if (toast.parentNode) {
@@ -53,6 +80,44 @@
   function init() {
     loadDashboardData();
     setupEvents();
+    initPolling();
+  }
+
+  // 10秒后台轻量轮询 revision 检查，若有更新则热重载数据
+  async function checkForUpdates() {
+    const syncStatus = document.getElementById('header-sync-status');
+    try {
+      const response = await fetch('/api/v1/project-status', { cache: 'no-store' });
+      if (!response.ok) throw new Error('status request failed');
+      const payload = await response.json();
+      const revision = payload && payload.data ? payload.data.revision : null;
+
+      if (syncStatus) {
+        syncStatus.textContent = '🟢 数据源联通';
+        syncStatus.style.color = '';
+      }
+
+      if (currentRevision && revision && revision !== currentRevision) {
+        currentRevision = revision;
+        if (syncStatus) syncStatus.textContent = '🔄 发现更新，同步中...';
+        loadDashboardData();
+        setTimeout(function () {
+          if (syncStatus) syncStatus.textContent = '🟢 数据源联通';
+        }, 1500);
+      } else if (!currentRevision && revision) {
+        currentRevision = revision;
+      }
+    } catch {
+      if (syncStatus) {
+        syncStatus.textContent = '🔴 数据同步异常';
+        syncStatus.style.color = '#ef4444';
+      }
+    }
+  }
+
+  function initPolling() {
+    if (pollTimer) clearInterval(pollTimer);
+    pollTimer = setInterval(checkForUpdates, 10000);
   }
 
   function setupEvents() {
@@ -163,16 +228,18 @@
     if (modId === 'all') {
       return (rawData.feishu_links && rawData.feishu_links.cases_url) || null;
     }
-    if (modId === 'mvp-a' || modId === 'P1' || modId === 'P2') {
-      const mvpA = (rawData.modules || []).find(m => m.id === 'mvp-a');
-      if (mvpA && mvpA.feishu_links && mvpA.feishu_links.cases_url) {
-        return mvpA.feishu_links.cases_url;
+    // 检查是否命中直属模块
+    const directMod = (rawData.modules || []).find(m => m.id === modId);
+    if (directMod && directMod.feishu_links && directMod.feishu_links.cases_url) {
+      return directMod.feishu_links.cases_url;
+    }
+    // 检查是否为子模块并回溯至父模块
+    if (modId === 'P1' || modId === 'P2') {
+      const parent = (rawData.modules || []).find(m => m.id === 'mvp-a');
+      if (parent && parent.feishu_links && parent.feishu_links.cases_url) {
+        return parent.feishu_links.cases_url;
       }
       return (rawData.feishu_links && rawData.feishu_links.cases_url) || null;
-    }
-    const targetMod = (rawData.modules || []).find(m => m.id === modId);
-    if (targetMod && targetMod.feishu_links && targetMod.feishu_links.cases_url) {
-      return targetMod.feishu_links.cases_url;
     }
     return null;
   }
@@ -181,20 +248,17 @@
     const btn = document.getElementById('sub-link-feishu-cases');
     if (!btn) return;
 
-    if (currentModuleFilter === 'all') {
-      const url = getModuleCasesUrl('all');
-      btn.textContent = '查看全量基线用例表 (MVP-A) ↗';
-      btn.href = url || 'javascript:void(0)';
-      btn.classList.remove('is-disabled');
-      btn.removeAttribute('data-disabled');
-    } else if (currentModuleFilter === 'mvp-a' || currentModuleFilter === 'P1' || currentModuleFilter === 'P2') {
-      const url = getModuleCasesUrl('mvp-a');
-      btn.textContent = '在飞书查看完整矩阵 ↗';
-      btn.href = url || 'javascript:void(0)';
+    const url = getModuleCasesUrl(currentModuleFilter);
+    if (url) {
+      if (currentModuleFilter === 'all') {
+        btn.textContent = '查看全量基线用例表 (MVP-A) ↗';
+      } else {
+        btn.textContent = '在飞书查看完整矩阵 ↗';
+      }
+      btn.href = url;
       btn.classList.remove('is-disabled');
       btn.removeAttribute('data-disabled');
     } else {
-      // mvp-b, mvp-b-ai, P3, etc.
       btn.textContent = '飞书用例表 (待生成) ⊘';
       btn.href = 'javascript:void(0)';
       btn.classList.add('is-disabled');
@@ -209,7 +273,8 @@
 
     modules.forEach(function (mod) {
       const card = document.createElement('div');
-      card.className = 'module-card' + (mod.id === 'mvp-a' ? ' active-module' : '');
+      const isCardActive = (mod.id === currentModuleFilter) || (currentModuleFilter === 'all' && mod.id === 'mvp-a');
+      card.className = 'module-card' + (isCardActive ? ' active-module' : '');
       card.setAttribute('data-module-id', mod.id);
 
       const circleClass = (mod.pass_rate > 0) ? '' : ' zero';
@@ -249,7 +314,7 @@
         </div>
       `;
 
-      // In-Card Asset Bar (Scheme B: Decoupled from Header)
+      // 模块级资产栏（已从顶栏彻底解耦）
       const feishu = mod.feishu_links || {};
       let assetsHtml = '';
 
@@ -272,6 +337,22 @@
         assetsHtml = prdLink + casesPlaceholder;
       } else if (mod.id === 'mvp-b-ai') {
         assetsHtml = `<span class="card-asset-pill is-disabled" data-toast="💡 MVP-B AI 处于规划准备期，用例矩阵尚未建立">💡 规划预研中</span>`;
+      } else {
+        // 通用未来模块兜底
+        const pills = [];
+        if (feishu.prd_url) {
+          pills.push(`<a class="card-asset-pill" href="${escapeHtml(feishu.prd_url)}" target="_blank" rel="noopener noreferrer">📄 需求文档 ↗</a>`);
+        }
+        if (feishu.cases_url) {
+          pills.push(`<a class="card-asset-pill" href="${escapeHtml(feishu.cases_url)}" target="_blank" rel="noopener noreferrer">📊 用例矩阵 ↗</a>`);
+        }
+        if (feishu.report_url) {
+          pills.push(`<a class="card-asset-pill" href="${escapeHtml(feishu.report_url)}" target="_blank" rel="noopener noreferrer">📑 交付报告 ↗</a>`);
+        }
+        if (pills.length === 0) {
+          pills.push(`<span class="card-asset-pill is-disabled" data-toast="💡 该模块文档准备中">📄 内部筹备中</span>`);
+        }
+        assetsHtml = pills.join('');
       }
 
       if (assetsHtml) {
@@ -340,6 +421,21 @@
       nodeEl.classList.add('active-node');
       currentModuleFilter = node.id;
       document.getElementById('pane-title').textContent = node.label;
+
+      // 双向同步顶部模块卡片高亮
+      document.querySelectorAll('.module-card').forEach(function (c) {
+        const cardId = c.getAttribute('data-module-id');
+        const isMatched = (cardId === node.id) ||
+          (node.id === 'P1' && cardId === 'mvp-a') ||
+          (node.id === 'P2' && cardId === 'mvp-a') ||
+          (node.id.startsWith('P3') && cardId === 'mvp-b');
+        if (isMatched) {
+          c.classList.add('active-module');
+        } else {
+          c.classList.remove('active-module');
+        }
+      });
+
       renderTable();
       updateCasesActionButton();
     });
@@ -354,31 +450,35 @@
   }
 
   function selectModuleById(moduleId) {
-    let targetNodeId = moduleId;
+    currentModuleFilter = moduleId;
     let targetLabel = '全部需求';
-    if (moduleId === 'mvp-a') {
-      targetNodeId = 'mvp-a';
-      targetLabel = 'MVP-A 管理运营底座';
-    } else if (moduleId === 'mvp-b') {
-      targetNodeId = 'mvp-b';
-      targetLabel = 'MVP-B 教师学情工作台';
-    } else if (moduleId === 'mvp-b-ai') {
-      targetNodeId = 'mvp-b-ai';
-      targetLabel = 'MVP-B AI 文字整理';
+
+    // 优先从 rawData.modules 获取动态名称
+    if (rawData && Array.isArray(rawData.modules)) {
+      const targetMod = rawData.modules.find(m => m.id === moduleId);
+      if (targetMod && targetMod.name) {
+        targetLabel = targetMod.name;
+      }
     }
 
-    currentModuleFilter = targetNodeId;
+    // 遍历树节点激活状态并提取节点 label
     document.querySelectorAll('.tree-node').forEach(function (n) {
-      if (n.getAttribute('data-node-id') === targetNodeId) {
+      if (n.getAttribute('data-node-id') === moduleId) {
         n.classList.add('active-node');
         const labelSpan = n.querySelector('.tree-node-left span:last-child');
-        if (labelSpan) targetLabel = labelSpan.textContent;
+        if (labelSpan && labelSpan.textContent) {
+          targetLabel = labelSpan.textContent.trim();
+        }
       } else {
         n.classList.remove('active-node');
       }
     });
 
-    document.getElementById('pane-title').textContent = targetLabel;
+    const paneTitleEl = document.getElementById('pane-title');
+    if (paneTitleEl) {
+      paneTitleEl.textContent = targetLabel;
+    }
+
     renderTable();
     updateCasesActionButton();
   }
@@ -392,18 +492,23 @@
       let matchModule = false;
       if (currentModuleFilter === 'all') {
         matchModule = true;
-      } else if (currentModuleFilter === 'mvp-a') {
-        matchModule = (c.module === 'P1' || c.module === 'P2');
-      } else if (currentModuleFilter === 'mvp-b' || currentModuleFilter.startsWith('P3') || currentModuleFilter === 'mvp-b-ai') {
-        matchModule = false;
-      } else {
-        matchModule = (c.module === currentModuleFilter);
+      } else if (c.branch && c.branch === currentModuleFilter) {
+        // 直接按 branch 属性匹配
+        matchModule = true;
+      } else if (c.module && c.module === currentModuleFilter) {
+        // 直接按 module 匹配
+        matchModule = true;
+      } else if (currentModuleFilter === 'mvp-a' && (c.module === 'P1' || c.module === 'P2')) {
+        matchModule = true;
+      } else if (currentModuleFilter === 'mvp-b' && (c.module === 'P3' || (typeof c.module === 'string' && c.module.startsWith('P3')))) {
+        matchModule = true;
       }
 
       const matchStatus = (currentStatusFilter === 'all') || (c.status === currentStatusFilter);
       const matchSearch = !currentSearchText ||
-        c.id.toLowerCase().includes(currentSearchText.toLowerCase()) ||
-        c.title.toLowerCase().includes(currentSearchText.toLowerCase());
+        (c.id && c.id.toLowerCase().includes(currentSearchText.toLowerCase())) ||
+        (c.title && c.title.toLowerCase().includes(currentSearchText.toLowerCase())) ||
+        (c.module_name && c.module_name.toLowerCase().includes(currentSearchText.toLowerCase()));
 
       return matchModule && matchStatus && matchSearch;
     });
