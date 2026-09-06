@@ -3,7 +3,7 @@
 (function () {
   'use strict';
 
-  const syncPanel = document.querySelector('.sync-panel');
+  const syncPanel = document.querySelector('.sync-panel, .lightweight-sync');
   const syncStatus = document.querySelector('#sync-status');
   const initialRevision = document.body.dataset.dashboardRevision || null;
 

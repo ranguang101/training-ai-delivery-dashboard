@@ -274,11 +274,17 @@ def _role_summary(
 ) -> dict[str, Any]:
     roles = _mapping(payload.get("roles"))
     raw = _mapping(roles.get(role))
+    field_prefix = f"roles.{role}.status"
+    if not raw and role == "frontend":
+        workspaces = _mapping(payload.get("workspaces"))
+        raw = _mapping(workspaces.get("frontend"))
+        field_prefix = "workspaces.frontend.status"
+    name_fallback = "前端开发" if role == "frontend" else role
     return {
-        "name": _safe_text(raw.get("name"), role),
+        "name": _safe_text(raw.get("name"), name_fallback),
         "status": _optional_status(
             raw.get("status"),
-            field=f"roles.{role}.status",
+            field=field_prefix,
             labels=ROLE_STATUS_LABELS,
             warnings=warnings,
         ),

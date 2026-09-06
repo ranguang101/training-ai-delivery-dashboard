@@ -902,21 +902,29 @@ footer {
 .lightweight-progress-track { height: 8px; margin-top: 14px; overflow: hidden; background: #e6ece7; border-radius: 99px; }
 .lightweight-progress-track i { display: block; height: 100%; background: #5ea37d; border-radius: inherit; }
 
+.lightweight-metric-alert strong { color: var(--lw-red, #c0392b); }
+
 .lightweight-section { margin-top: 18px; padding: 20px; background: var(--lw-panel); }
 .lightweight-section-head, .lightweight-panel-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
 .lightweight-section-head { align-items: baseline; margin-bottom: 16px; }
 .lightweight-section-head h2, .lightweight-panel-head h2 { margin: 0; font-size: 19px; letter-spacing: -0.02em; }
 .lightweight-section-head p, .lightweight-panel-head p { max-width: 54ch; margin: 0; color: var(--lw-muted); font-size: 12px; line-height: 1.6; }
-.lightweight-track { display: grid; position: relative; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px; margin-top: 17px; }
-.lightweight-track::before { position: absolute; top: 17px; right: 7%; left: 7%; height: 2px; content: ''; background: #d6e1d8; }
+.lightweight-track { display: grid; position: relative; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; margin-top: 17px; }
+.lightweight-track::before { position: absolute; top: 17px; right: 6%; left: 6%; height: 2px; content: ''; background: #d6e1d8; }
 .lightweight-track-node { position: relative; text-align: center; }
 .lightweight-track-node span { position: relative; z-index: 1; display: grid; width: 35px; height: 35px; margin: 0 auto 8px; place-items: center; color: #67726d; background: #edf1ed; border: 2px solid #d6e1d8; border-radius: 50%; font-weight: 900; }
 .lightweight-track-node strong { display: block; font-size: 12px; }
 .lightweight-track-node small { display: block; margin-top: 3px; color: var(--lw-muted); font-size: 10px; }
+.lightweight-track-node.is-passed span { color: #fff; background: var(--lw-green); border-color: var(--lw-green); }
+.lightweight-track-node.is-passed strong { color: var(--lw-green); }
+.lightweight-track-node.is-current span { color: #fff; background: #1e40af; border-color: #1e40af; box-shadow: 0 0 0 4px rgba(30, 64, 175, 0.2); }
+.lightweight-track-node.is-current strong { color: #1e40af; font-weight: 900; }
+.lightweight-track-node.is-current small { color: #1e40af; font-weight: 700; }
 
 .lightweight-line-list { display: grid; gap: 9px; }
 .lightweight-line-row { display: grid; grid-template-columns: 1.3fr 0.68fr 0.8fr 0.55fr 100px; align-items: center; gap: 12px; padding: 14px 15px; background: #fff; border: 1px solid var(--lw-line); border-radius: 11px; }
 .lightweight-line-row:hover { background: #fbfefb; border-color: #9fc4ad; }
+.lightweight-line-row.is-selected { border-color: var(--lw-green); background: #f4faf6; box-shadow: 0 0 0 2px rgba(41, 106, 76, 0.15); }
 .lightweight-line-row h3 { margin: 0; font-size: 14px; overflow-wrap: anywhere; }
 .lightweight-line-row p { margin: 3px 0 0; color: var(--lw-muted); font-size: 11px; line-height: 1.45; }
 .lightweight-line-meta { display: grid; gap: 3px; min-width: 0; }
@@ -930,6 +938,12 @@ footer {
 .lightweight-panel { min-width: 0; padding: 20px; background: var(--lw-panel); }
 .lightweight-panel-head { margin-bottom: 16px; }
 .lightweight-panel-alert { background: #fffaf1; border-color: #ead4ad; }
+@keyframes pulseHighlight {
+  0% { box-shadow: 0 0 0 0 rgba(41, 106, 76, 0.4); }
+  50% { box-shadow: 0 0 0 6px rgba(41, 106, 76, 0.2); }
+  100% { box-shadow: 0 0 0 0 rgba(41, 106, 76, 0); }
+}
+.lightweight-panel-pulse { animation: pulseHighlight 1.5s ease-out; }
 .lightweight-list { display: grid; gap: 0; margin: 0; padding: 0; list-style: none; }
 .lightweight-list-item { padding: 12px 0; border-bottom: 1px solid #edf0ec; }
 .lightweight-list-item:first-child { padding-top: 0; }
@@ -991,7 +1005,7 @@ footer {
   .lightweight-head-actions > * { flex: 1; }
   .lightweight-hero, .lightweight-two-column, .lightweight-three-column { grid-template-columns: 1fr; }
   .lightweight-metric-grid-four { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .lightweight-track { min-width: 650px; }
+  .lightweight-track { min-width: 700px; }
   .lightweight-section { overflow-x: auto; }
 }
 

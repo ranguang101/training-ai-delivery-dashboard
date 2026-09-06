@@ -112,11 +112,46 @@
     textBlock.append(el('p', 'lightweight-eyebrow', copy[0]), title, el('p', 'lightweight-page-description', copy[2]));
     const actions = el('div', 'lightweight-head-actions');
     const details = {
-      overview: ['查看口径', '总览承载方向、进度、交付线和决策队列；没有数据时保持待关联。'],
-      product: ['查看变更边界', '版本与变更只作为项目状态摘要展示，完整产品文档不在看板内展开。'],
-      frontend: ['查看交付边界', '候选版本是交付身份，不等于独立测试通过、产品验收通过或可试用。'],
-      development: ['查看风险边界', '技术评审和实施摘要只用于观察，审批仍在看板外完成。'],
-      testing: ['查看测试口径', '正式测试、辅助自动化、产品验收和发布结论保持独立。'],
+      overview: [
+        '查看口径',
+        [
+          '【总览口径】承载整体方向、进度、当前交付线和决策队列。',
+          '【范围边界】轻量只读观察，不替代产品验收，不提供业务操作或发布能力。',
+          '【状态流转】遵循 D0—D6 受控证据链条，缺失受控证据时保持待关联。',
+        ].join('\n'),
+      ],
+      product: [
+        '查看变更边界',
+        [
+          '【产品基线】版本与范围由状态文件驱动。',
+          '【排除项】完整 PRD、敏感业务字段与原始设计文档不在看板内展开。',
+          '【准入门禁】产品验收通过不等于可试用或发布，需与独立测试、负责人审批协同判断。',
+        ].join('\n'),
+      ],
+      frontend: [
+        '查看交付边界',
+        [
+          '【前端范围】展示当前页面实现范围与浏览器验证状态。',
+          '【交付证据】候选版本作为交付身份，需与服务端、测试来源三方核对。',
+          '【阻断说明】未解阻断会标明等待事项，不隐藏问题。',
+        ].join('\n'),
+      ],
+      development: [
+        '查看风险边界',
+        [
+          '【技术评审】评审状态与下一步行动只用于跟踪观察。',
+          '【实施边界】具体实施包、数据迁移和技术方案由工程仓管理，不在此操作。',
+          '【风险隔离】技术风险需明确责任角色、影响面与解除条件。',
+        ].join('\n'),
+      ],
+      testing: [
+        '查看测试口径',
+        [
+          '【质量生命周期】正式 Case、RUN 记录、缺陷与测试报告保持独立追踪。',
+          '【自动化界限】辅助自动化脚本不自动等同于功能验收通过。',
+          '【降级原则】非法或未知状态统一降级为待核对，严禁隐瞒缺陷。',
+        ].join('\n'),
+      ],
     };
     const [label, body] = details[page] || details.overview;
     const info = el('button', 'lightweight-button', label);
@@ -161,7 +196,12 @@
     const list = el('div', compact ? 'lightweight-line-list lightweight-line-list-compact' : 'lightweight-line-list');
     if (!Array.isArray(lines) || !lines.length) return empty('尚未建立产品交付线');
     lines.forEach((lineItem) => {
-      const row = el('article', compact ? 'lightweight-line-row' : 'lightweight-line-row lightweight-line-row-large');
+      const isSelected = Boolean(currentLine && lineItem.delivery_line_id === currentLine);
+      const rowClass = [
+        compact ? 'lightweight-line-row' : 'lightweight-line-row lightweight-line-row-large',
+        isSelected ? 'is-selected' : '',
+      ].filter(Boolean).join(' ');
+      const row = el('article', rowClass);
       const identity = el('div');
       identity.append(el('h3', '', safe(lineItem.name)), el('p', '', safe(lineItem.summary || lineItem.scope_summary)));
       const current = el('div', 'lightweight-line-meta');
@@ -198,7 +238,23 @@
     const sideBody = firstDecision ? safe(firstDecision.impact_summary) : '项目状态文件未登记下一项负责人决策。';
     const content = el('div', 'lightweight-content-block');
     content.append(pageHead(data), lineSelector(data));
-    content.append(hero(data, title, summary, sideTitle, sideBody, firstDecision ? el('button', 'lightweight-hero-action', '查看决定项') : null));
+
+    let heroAction = null;
+    if (firstDecision) {
+      heroAction = el('button', 'lightweight-hero-action', '查看决定项');
+      heroAction.type = 'button';
+      heroAction.addEventListener('click', () => {
+        const target = document.querySelector('#overview-decisions');
+        if (target) {
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          target.classList.remove('lightweight-panel-pulse');
+          void target.offsetWidth;
+          target.classList.add('lightweight-panel-pulse');
+        }
+      });
+    }
+
+    content.append(hero(data, title, summary, sideTitle, sideBody, heroAction));
     const metrics = el('div', 'lightweight-metric-grid lightweight-metric-grid-four');
     const progress = item.progress_percent;
     const selected = data.selected_line;
@@ -215,11 +271,44 @@
     gateHead.firstChild.append(el('p', 'lightweight-eyebrow', 'DELIVERY RHYTHM'), el('h2', '', '交付节奏'));
     gateHead.append(el('p', '', '未登记的阶段保持待关联，不由看板自行计算。'));
     const track = el('div', 'lightweight-track');
-    ['产品基线', '字段契约', '组合候选', '开发联调', '独立测试', '产品验收'].forEach((label, index) => {
-      const node = el('div', 'lightweight-track-node');
-      node.append(el('span', '', `D${index + 1}`), el('strong', '', label), el('small', '', '待关联'));
+
+    const rhythmNodes = [
+      { level: 'D0', label: '受控证据' },
+      { level: 'D1', label: '产品基线' },
+      { level: 'D2', label: '方案契约' },
+      { level: 'D3', label: '组合候选' },
+      { level: 'D4', label: '测试执行' },
+      { level: 'D5', label: '独立测试' },
+      { level: 'D6', label: '运行确认' },
+    ];
+
+    const currentLevelCode = selected && selected.evidence_level ? selected.evidence_level.code : null;
+    const currentLevelNum = (currentLevelCode && /^D[0-6]$/.test(currentLevelCode))
+      ? parseInt(currentLevelCode.replace('D', ''), 10)
+      : -1;
+
+    rhythmNodes.forEach((nodeItem, index) => {
+      let stateClass = '';
+      let stateText = '待关联';
+
+      if (currentLevelNum >= 0) {
+        if (index < currentLevelNum) {
+          stateClass = 'is-passed';
+          stateText = '已完成';
+        } else if (index === currentLevelNum) {
+          stateClass = 'is-current';
+          stateText = '当前';
+        } else {
+          stateClass = 'is-pending';
+          stateText = '待完成';
+        }
+      }
+
+      const node = el('div', `lightweight-track-node ${stateClass}`.trim());
+      node.append(el('span', '', nodeItem.level), el('strong', '', nodeItem.label), el('small', '', stateText));
       track.append(node);
     });
+
     gates.append(gateHead, track);
     content.append(gates);
     const lineSection = el('section', 'lightweight-section');
@@ -230,8 +319,10 @@
     const lower = el('div', 'lightweight-two-column');
     const roadmap = el('div', 'lightweight-list');
     roadmap.append(el('p', 'lightweight-eyebrow', 'PRODUCT BASELINE'), el('h3', '', safe(item.progress_summary, '产品基线待关联')), el('p', '', safe(item.summary)), link('进入产品页 →', pagePath('/project-status/product')));
+    const decisionPanel = panel('需要关注', decisions(item.decisions), null, 'lightweight-panel-alert');
+    decisionPanel.id = 'overview-decisions';
     lower.append(panel('PRD / 产品基线', roadmap));
-    lower.append(panel('需要关注', decisions(item.decisions), null, 'lightweight-panel-alert'));
+    lower.append(decisionPanel);
     content.append(lower);
     return content;
   }
@@ -281,7 +372,25 @@
     content.append(pageHead(data), lineSelector(data));
     content.append(hero(data, safe(item.role && item.role.current, '前端当前工作待关联'), safe(item.role && item.role.next), '前端交付边界', '候选版本和浏览器验证摘要待关联时，不替代独立测试结论。'));
     const metrics = el('div', 'lightweight-metric-grid lightweight-metric-grid-four');
-    metrics.append(metric('角色状态', safe(item.role && item.role.status && item.role.status.label), '前端责任摘要'), metric('交付线', display(Array.isArray(item.lines) ? item.lines.length : 0), '当前登记数量'), metric('浏览器验证', '待关联', '不自动形成验收结论'), metric('前端阻断', '待关联', '等待状态文件登记'));
+
+    const hasVerification = Boolean(item.browser_verification && item.browser_verification !== '待关联');
+    const hasBlockers = Boolean(item.blockers && item.blockers !== '待关联' && item.blockers !== '无');
+
+    metrics.append(
+      metric('角色状态', safe(item.role && item.role.status && item.role.status.label), '前端责任摘要'),
+      metric('交付线', display(Array.isArray(item.lines) ? item.lines.length : 0), '当前登记数量'),
+      metric(
+        '浏览器验证',
+        hasVerification ? '已登记' : '待关联',
+        hasVerification ? '详情见下方验证与阻断' : '不自动形成验收结论'
+      ),
+      metric(
+        '前端阻断',
+        hasBlockers ? '有待解阻断' : '无阻断',
+        hasBlockers ? '详情见下方验证与阻断' : '等待状态文件登记',
+        hasBlockers ? 'lightweight-metric-alert' : ''
+      )
+    );
     content.append(metrics, panel('页面实现范围', lineRows(item.lines), null, 'lightweight-panel-full'));
     const candidate = el('div', 'lightweight-list');
     candidate.append(el('p', '', '候选版本只作为交付证据身份。前端、服务端和测试来源不一致时，保持待核对。'), el('p', 'lightweight-muted', '候选历史、关联交接单和浏览器证据进入后续受控详情。'));
@@ -300,7 +409,25 @@
     content.append(pageHead(data), lineSelector(data));
     content.append(hero(data, safe(item.role && item.role.current, '服务端当前工作待关联'), safe(item.role && item.role.next), '技术评审状态', reviews.length ? safe(reviews[0].status && reviews[0].status.label) : '待关联'));
     const metrics = el('div', 'lightweight-metric-grid lightweight-metric-grid-four');
-    metrics.append(metric('角色状态', safe(item.role && item.role.status && item.role.status.label), '服务端责任摘要'), metric('技术评审', display(reviews.length), '当前登记数量'), metric('实施范围', '待关联', '不展开实施操作'), metric('技术风险', '待关联', '需要状态文件登记'));
+
+    const hasScope = Boolean(item.implementation_scope && item.implementation_scope !== '待关联');
+    const hasRisks = Boolean(item.risks && item.risks !== '待关联' && item.risks !== '无');
+
+    metrics.append(
+      metric('角色状态', safe(item.role && item.role.status && item.role.status.label), '服务端责任摘要'),
+      metric('技术评审', display(reviews.length), '当前登记数量'),
+      metric(
+        '实施范围',
+        hasScope ? '已明确' : '待关联',
+        hasScope ? '实施边界已登记' : '不展开实施操作'
+      ),
+      metric(
+        '技术风险',
+        hasRisks ? '有风险' : '无阻断/正常',
+        hasRisks ? '详情见下方技术风险' : '需要状态文件登记',
+        hasRisks ? 'lightweight-metric-alert' : ''
+      )
+    );
     content.append(metrics);
     const reviewList = el('div', 'lightweight-list');
     if (!reviews.length) reviewList.append(empty('技术评审待关联'));
@@ -328,7 +455,17 @@
     content.append(pageHead(data), lineSelector(data));
     content.append(hero(data, ready ? '质量摘要已建立' : '质量统计待关联', ready ? '当前已登记质量对象，可从质量详情继续查看生命周期。' : '正式项目状态文件尚未关联质量工作区，页面不猜测 Case、缺陷或测试结论。', '质量边界', '辅助自动化、独立测试、产品验收、试用和发布仍分别判断.', link('进入质量详情 →', pagePath('/project-status/tests/requirements'), 'lightweight-hero-action')));
     const metrics = el('div', 'lightweight-metric-grid lightweight-metric-grid-six');
-    metrics.append(metric('正式 Case', display(item.formal_cases), '不含候选 Case'), metric('已执行', display(item.executed), '正式执行结果'), metric('通过', display(item.passed), '不推导产品结论'), metric('失败 / 阻塞', `${display(item.failed)} / ${display(item.blocked)}`, '待后续核对'), metric('未执行', display(item.not_executed), '待后续执行'), metric('未关闭缺陷', item.defects ? display(item.defects.open) : '待关联', '来自缺陷登记'));
+    const caseNote = ready
+      ? `已执行: ${display(item.executed, '0')} / 待补录: ${display(item.not_executed, '0')}`
+      : '不含候选 Case';
+    metrics.append(
+      metric('正式 Case', display(item.formal_cases), caseNote),
+      metric('已执行', display(item.executed), '正式执行结果'),
+      metric('通过', display(item.passed), '不推导产品结论'),
+      metric('失败 / 阻塞', `${display(item.failed)} / ${display(item.blocked)}`, '待后续核对'),
+      metric('未执行', display(item.not_executed), '待后续执行'),
+      metric('未关闭缺陷', item.defects ? display(item.defects.open) : '待关联', '来自缺陷登记')
+    );
     content.append(metrics);
     const execution = el('div', 'lightweight-list');
     if (!ready) execution.append(empty('正式测试执行分布待关联'));
@@ -339,7 +476,24 @@
       execution.append(row);
     });
     const boundary = el('div', 'lightweight-list');
-    boundary.append(el('p', '', '辅助自动化、开发自测和候选 Case 不自动计入正式测试通过。'), el('p', 'lightweight-muted', safe(item.coverage, '覆盖关系待关联')));
+    boundary.append(
+      el('p', '', '辅助自动化、开发自测和候选 Case 不自动计入正式测试通过。'),
+      ready
+        ? el(
+            'p',
+            '',
+            `结构化记录：已执行 ${display(item.executed, '0')} 条 / 待补录RUN ${display(item.not_executed, '0')} 条（总计 ${display(item.formal_cases, '0')} 条）。`
+          )
+        : null,
+      ready
+        ? el(
+            'p',
+            'lightweight-muted',
+            `角色文本摘要已申报 ${display(item.formal_cases, '0')} 条收口，正式执行记录待测试同步录入。`
+          )
+        : null,
+      el('p', 'lightweight-muted', safe(item.coverage, '覆盖关系待关联'))
+    );
     const columns = el('div', 'lightweight-two-column');
     columns.append(panel('正式 Case 执行分布', execution), panel('缺陷与覆盖边界', boundary));
     content.append(columns);
@@ -363,7 +517,14 @@
     document.querySelector('#lightweight-drawer-sub').textContent = '受控摘要 · 本地只读';
     drawerBody.replaceChildren();
     const section = el('section', 'lightweight-drawer-section');
-    section.append(el('h3', '', title), el('p', '', body), el('p', 'lightweight-muted', '完整原始文档、日志、代码路径和业务数据不在此面板展开。'));
+    section.append(el('h3', '', title));
+    const lines = typeof body === 'string' ? body.split('\n') : [body];
+    lines.forEach((lineText) => {
+      if (lineText && typeof lineText === 'string') {
+        section.append(el('p', '', lineText));
+      }
+    });
+    section.append(el('p', 'lightweight-muted', '完整原始文档、日志、代码路径和业务数据不在此面板展开。'));
     drawerBody.append(section);
     backdrop.hidden = false;
     backdrop.classList.add('is-open');
@@ -382,6 +543,17 @@
     const project = data.project || {};
     const crumb = document.querySelector('#lightweight-project-crumb');
     if (crumb) crumb.textContent = safe(project.name, '项目名称待关联');
+    const contextEl = document.querySelector('.lightweight-context');
+    if (contextEl && project.updated_display) {
+      let updateTag = contextEl.querySelector('#lightweight-updated-tag');
+      if (!updateTag) {
+        updateTag = el('span', 'lightweight-source-tag', `更新于：${safe(project.updated_display)}`);
+        updateTag.id = 'lightweight-updated-tag';
+        contextEl.prepend(updateTag);
+      } else {
+        updateTag.textContent = `更新于：${safe(project.updated_display)}`;
+      }
+    }
     root.replaceChildren();
     const warnings = Array.isArray(data.warnings) ? data.warnings : [];
     if (warnings.length) {
