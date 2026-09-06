@@ -41,6 +41,11 @@ def test_default_demo_starts_with_r3_safe_projection_only() -> None:
         assert set(sync.json()["data"]) == {"project_name", "last_updated", "revision"}
         assert sync.json()["data"]["revision"]
 
+        # Root URL redirects cleanly to /project-status.
+        root_resp = client.get("/", follow_redirects=False)
+        assert root_resp.status_code == 307
+        assert root_resp.headers["location"] == "/project-status"
+
         # R2 raw-data and auxiliary-operation surfaces are not part of R3.
         assert client.get("/api/v1/project-status/dashboard").status_code == 404
         assert client.get("/project-status/tests/automation").status_code == 404

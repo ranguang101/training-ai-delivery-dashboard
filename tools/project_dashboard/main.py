@@ -58,6 +58,13 @@ def create_dashboard_app(
         name="static",
     )
     app.include_router(project_status_router)
+
+    @app.get("/", include_in_schema=False)
+    def root_redirect():
+        from fastapi.responses import RedirectResponse
+
+        return RedirectResponse(url="/project-status")
+
     return app
 
 
