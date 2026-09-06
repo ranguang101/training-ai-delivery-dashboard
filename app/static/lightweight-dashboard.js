@@ -44,6 +44,10 @@
   function link(label, href, className = 'lightweight-link') {
     const node = el('a', className, label);
     node.href = href;
+    if (typeof href === 'string' && (href.startsWith('http://') || href.startsWith('https://'))) {
+      node.target = '_blank';
+      node.rel = 'noopener noreferrer';
+    }
     return node;
   }
 
@@ -210,7 +214,12 @@
       next.append(el('span', '', '下一步'), el('strong', '', safe(lineItem.next_action)));
       const count = el('div', 'lightweight-line-meta');
       count.append(el('span', '', '开放阻断'), el('strong', '', display(lineItem.blocker_count, '0')));
-      row.append(identity, current, next, count, link('查看详情 →', pagePath(`/project-status/delivery-lines/${encodeURIComponent(lineItem.delivery_line_id)}`)));
+      const actionWrap = el('div', 'lightweight-line-actions');
+      actionWrap.append(link('查看详情 →', pagePath(`/project-status/delivery-lines/${encodeURIComponent(lineItem.delivery_line_id)}`)));
+      if (lineItem.feishu_url) {
+        actionWrap.append(link('飞书 PRD ↗', lineItem.feishu_url, 'lightweight-link lightweight-link-feishu'));
+      }
+      row.append(identity, current, next, count, actionWrap);
       list.append(row);
     });
     return list;
@@ -343,6 +352,9 @@
       row.append(el('div', 'lightweight-list-heading', null));
       row.firstChild.append(el('strong', '', `${safe(version.code)} · ${safe(version.title)}`), status(version.status));
       row.append(el('p', '', safe(version.scope)), el('p', 'lightweight-muted', `下一道门：${safe(version.next_gate)}`));
+      if (version.feishu_url) {
+        row.append(link('查看飞书 PRD ↗', version.feishu_url, 'lightweight-link lightweight-link-feishu'));
+      }
       scope.append(row);
     });
     const baseline = el('div', 'lightweight-list');
@@ -458,8 +470,12 @@
     const caseNote = ready
       ? `已执行: ${display(item.executed, '0')} / 待补录: ${display(item.not_executed, '0')}`
       : '不含候选 Case';
+    const caseMetric = metric('正式 Case', display(item.formal_cases), caseNote);
+    if (item.feishu_cases_url) {
+      caseMetric.append(link('飞书用例表 ↗', item.feishu_cases_url, 'lightweight-link lightweight-link-feishu'));
+    }
     metrics.append(
-      metric('正式 Case', display(item.formal_cases), caseNote),
+      caseMetric,
       metric('已执行', display(item.executed), '正式执行结果'),
       metric('通过', display(item.passed), '不推导产品结论'),
       metric('失败 / 阻塞', `${display(item.failed)} / ${display(item.blocked)}`, '待后续核对'),
@@ -494,6 +510,12 @@
         : null,
       el('p', 'lightweight-muted', safe(item.coverage, '覆盖关系待关联'))
     );
+    if (item.feishu_cases_url || item.feishu_report_url) {
+      const linkRow = el('div', 'lightweight-feishu-actions');
+      if (item.feishu_cases_url) linkRow.append(link('在飞书查看 47 条测试用例表 ↗', item.feishu_cases_url, 'lightweight-button lightweight-button-primary'));
+      if (item.feishu_report_url) linkRow.append(link('在飞书查看独立收口报告 ↗', item.feishu_report_url, 'lightweight-button'));
+      boundary.append(linkRow);
+    }
     const columns = el('div', 'lightweight-two-column');
     columns.append(panel('正式 Case 执行分布', execution), panel('缺陷与覆盖边界', boundary));
     content.append(columns);

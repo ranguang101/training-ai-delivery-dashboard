@@ -27,7 +27,7 @@ LINE_FIELDS = {
     "delivery_line_id", "name", "scope_summary", "status", "evidence_level",
     "contract_state", "candidate_version", "runtime_gate", "display_label",
     "summary", "source_role", "source_role_label", "verified_at", "updated_at",
-    "blocker_count", "next_action",
+    "blocker_count", "next_action", "feishu_url",
 }
 ROLE_FIELDS = {"name", "status", "current", "next", "waiting_for", "integration_status"}
 FORBIDDEN_TOKENS = {

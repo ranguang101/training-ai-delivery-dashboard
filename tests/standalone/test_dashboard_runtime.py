@@ -44,7 +44,7 @@ def test_default_demo_starts_with_r3_safe_projection_only() -> None:
         # Root URL redirects cleanly to /project-status.
         root_resp = client.get("/", follow_redirects=False)
         assert root_resp.status_code == 307
-        assert root_resp.headers["location"] == "/project-status"
+        assert root_resp.headers["location"] == "/project-status/v2"
 
         # R2 raw-data and auxiliary-operation surfaces are not part of R3.
         assert client.get("/api/v1/project-status/dashboard").status_code == 404

@@ -63,7 +63,7 @@ def create_dashboard_app(
     def root_redirect():
         from fastapi.responses import RedirectResponse
 
-        return RedirectResponse(url="/project-status")
+        return RedirectResponse(url="/project-status/v2")
 
     return app
 

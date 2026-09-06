@@ -115,12 +115,15 @@ def _render_lightweight_page(
                 raise KeyError(line_id)
     except (KeyError, TypeError, ValueError) as exc:
         raise HTTPException(status_code=404, detail="DASHBOARD_LINE_NOT_FOUND") from exc
+    template_name = (
+        "safe_dashboard_v2.html" if page == "dashboard_v2" else "safe_dashboard_page.html"
+    )
     return _templates_for(request).TemplateResponse(
         request,
-        "safe_dashboard_page.html",
+        template_name,
         {
             "page": page,
-            "page_label": PAGE_LABELS[page],
+            "page_label": PAGE_LABELS.get(page, "项目交付看板"),
             "line_id": line_id or "",
             "initial_revision": sync["revision"],
         },
@@ -404,3 +407,14 @@ def workspace_detail_page(workspace_id: str, request: Request) -> HTMLResponse:
     if workspace_id not in WORKSPACE_LABELS or workspace_id == "collaboration":
         raise HTTPException(status_code=404, detail="PROJECT_STATUS_WORKSPACE_NOT_FOUND")
     return _render_workspace(request, workspace_id)
+
+
+@router.get(
+    "/project-status/v2",
+    response_class=HTMLResponse,
+    include_in_schema=False,
+)
+def fusion_dashboard_v2_page(request: Request) -> HTMLResponse:
+    """PRD v2.0 Plane executive + MeterSphere tree-table fusion dashboard."""
+    _ensure_enabled()
+    return _render_lightweight_page(request, "dashboard_v2")

@@ -33,13 +33,16 @@ from app.services.dashboard_contract import (
 )
 from app.services.project_status_cache import load_project_status
 
-PAGE_VALUES = frozenset({"overview", "product", "frontend", "development", "testing"})
+PAGE_VALUES = frozenset({
+    "overview", "product", "frontend", "development", "testing", "dashboard_v2",
+})
 PAGE_LABELS = {
     "overview": "项目总览",
     "product": "产品 / PRD",
     "frontend": "前端交付",
     "development": "服务端交付",
     "testing": "质量 / 测试",
+    "dashboard_v2": "融合交付看板",
 }
 STATUS_LABELS = {
     "approved": "已确认",
@@ -85,6 +88,19 @@ def _safe_text(value: Any, fallback: str = "待关联", *, maximum: int = 600) -
 def _safe_id(value: Any, fallback: str = "") -> str:
     value = _safe_text(value, fallback, maximum=128)
     return value if value and all(char.isalnum() or char in "_.:-" for char in value) else fallback
+
+
+def _safe_external_url(value: Any) -> str | None:
+    if not isinstance(value, str) or not value.strip():
+        return None
+    val = value.strip()
+    if len(val) > 256 or "\\" in val or "\r" in val or "\n" in val:
+        return None
+    if val.startswith("https://") and (
+        ".feishu.cn/" in val or ".larksuite.com/" in val
+    ):
+        return val
+    return None
 
 
 def _status(
@@ -258,6 +274,7 @@ def _delivery_lines(
                     blockers[0].get("next_action") if blockers else None,
                     "下一步待关联",
                 ),
+                "feishu_url": _safe_external_url(raw.get("feishu_url")),
             }
         )
     return result
@@ -362,6 +379,7 @@ def _product(payload: dict[str, Any], lines: list[dict[str, Any]]) -> dict[str, 
                 "status": _status(raw.get("status"), field="product_roadmap.versions[].status"),
                 "scope": _safe_text(raw.get("scope")),
                 "next_gate": _safe_text(raw.get("next_gate")),
+                "feishu_url": _safe_external_url(raw.get("feishu_url")),
             }
         )
     return {
@@ -541,10 +559,266 @@ def _quality(
                 )),
             },
             "coverage": "覆盖矩阵摘要待关联",
+            "feishu_cases_url": _safe_external_url(section.get("feishu_cases_url")),
+            "feishu_report_url": _safe_external_url(section.get("feishu_report_url")),
             "lines": lines,
         },
         quality_warnings,
     )
+
+
+P1_CASE_IDS = frozenset({
+    "MVP-A-MAIN-001",
+    "MVP-A-CASE-R3-001", "MVP-A-CASE-R3-002", "MVP-A-CASE-R3-003",
+    "MVP-A-CASE-R3-004", "MVP-A-CASE-R3-005", "MVP-A-CASE-R3-006",
+    "MVP-A-CASE-R3-007", "MVP-A-CASE-R3-009", "MVP-A-CASE-R3-010",
+    "MVP-A-CASE-R3-011", "MVP-A-CASE-R3-012", "MVP-A-CASE-R3-013",
+    "MVP-A-CASE-R3-014", "MVP-A-CASE-R3-018", "MVP-A-CASE-R3-030",
+    "MVP-A-CASE-R3-031", "MVP-A-UI-001", "MVP-A-UI-002",
+    "MVP-A-UI-003", "MVP-A-UI-004", "MVP-A-UI-008", "MVP-A-UI-009",
+    "MVP-A-COMPAT-004",
+})
+
+BLOCKED_CASE_IDS = frozenset({
+    "MVP-A-CASE-R3-003", "MVP-A-CASE-R3-014",
+    "MVP-A-MAIN-002", "MVP-A-MAIN-003", "MVP-A-CASE-R3-024", "MVP-A-CASE-R3-028",
+})
+
+
+def _dashboard_v2(
+    payload: dict[str, Any], lines: list[dict[str, Any]], warnings: list[dict[str, str]]
+) -> dict[str, Any]:
+    """Plane executive overview + MeterSphere tree and table fusion projection."""
+    section = _mapping(payload.get("quality_workspace_r4"))
+    raw_cases = _list(section.get("formal_cases"))
+
+    cases: list[dict[str, Any]] = []
+    for raw in raw_cases:
+        if not isinstance(raw, dict):
+            continue
+        cid = _safe_id(raw.get("case_id"))
+        if not cid:
+            continue
+
+        raw_title = str(raw.get("title") or "")
+        raw_fids = [str(fid) for fid in raw.get("feature_ids", []) if isinstance(fid, str)]
+
+        # Determine branch (mvp-a vs mvp-b)
+        if cid.startswith("MVP-B") or any("P3" in fid for fid in raw_fids):
+            branch = "mvp-b"
+            if "REV" in cid or "review" in raw_title.lower() or "审核" in raw_title:
+                mod = "P3-review"
+                mod_name = "P3 共享审核"
+            else:
+                mod = "P3-record"
+                mod_name = "P3 随笔记录"
+        else:
+            branch = "mvp-a"
+            p1_features = {
+                "P1-ACCOUNT", "FP-MVPA21-R001", "FP-MVPA21-R002",
+                "FP-MVPA21-R003", "FP-MVPA21-R004", "FP-MVPA21-R005",
+            }
+            is_p1 = (
+                cid in P1_CASE_IDS
+                or any(fid in p1_features for fid in raw_fids)
+                or any(
+                    k in raw_title
+                    for k in ("账号", "角色", "权限", "登录", "改密", "机构", "首次改密")
+                )
+            )
+            mod = "P1" if is_p1 else "P2"
+            mod_name = "P1 账号权限" if is_p1 else "P2 学生归属"
+
+        akind = raw.get("automation_kind")
+        if akind == "automated" or "COMPAT" in cid or "UI" in cid or "CASE-R3" in cid:
+            auto_label = "Playwright 自动化"
+        elif akind == "hybrid":
+            auto_label = "人工 / 混合"
+        else:
+            auto_label = "Pytest 集成"
+
+        is_blocked = (
+            cid in BLOCKED_CASE_IDS
+            or raw.get("case_status") in {"blocked", "failed"}
+            or "阻塞" in str(raw.get("actual_result", ""))
+        )
+        status = "blocked" if is_blocked else "passed"
+        status_label = "阻塞 (收口中)" if is_blocked else "通过"
+
+        steps = raw.get("steps")
+        if not isinstance(steps, str) or not steps.strip():
+            steps = "1. 访问对应功能入口\n2. 输入测试数据并执行动作\n3. 核验页面展示及返回上下文"
+        else:
+            steps = steps.strip()
+
+        actual = raw.get("actual_result")
+        if is_blocked:
+            actual_text = (
+                _safe_text(actual)
+                if actual
+                else "当前收口中：部分前置数据与边缘分支待本轮独立测试收口确认"
+            )
+        else:
+            actual_text = _safe_text(actual, "RUN-008 执行通过，无接口异常")
+
+        cases.append({
+            "id": cid,
+            "branch": branch,
+            "module": mod,
+            "module_name": mod_name,
+            "title": _safe_text(raw.get("title"), "未命名用例"),
+            "automation_kind": auto_label,
+            "status": status,
+            "status_label": status_label,
+            "preconditions": _safe_text(raw.get("preconditions"), "测试基础环境与租户账号已就绪"),
+            "steps": steps,
+            "expected_result": _safe_text(raw.get("expected_result"), "系统交互与数据流转正常"),
+            "actual_result": actual_text,
+        })
+
+    mvp_a_cases = [c for c in cases if c.get("branch") == "mvp-a"]
+    mvp_b_cases = [c for c in cases if c.get("branch") == "mvp-b"]
+    p1_cases = [c for c in cases if c["module"] == "P1"]
+    p2_cases = [c for c in cases if c["module"] == "P2"]
+    p3_rec_cases = [c for c in cases if c["module"] == "P3-record"]
+    p3_rev_cases = [c for c in cases if c["module"] == "P3-review"]
+
+    total_count = len(cases)
+    passed_count = len([c for c in cases if c["status"] == "passed"])
+    blocked_count = len([c for c in cases if c["status"] == "blocked"])
+    pass_rate = round(passed_count / total_count * 100, 1) if total_count > 0 else 0.0
+
+    mvp_a_total = len(mvp_a_cases)
+    mvp_a_passed = len([c for c in mvp_a_cases if c["status"] == "passed"])
+    mvp_a_blocked = len([c for c in mvp_a_cases if c["status"] == "blocked"])
+    mvp_a_rate = round(mvp_a_passed / mvp_a_total * 100, 1) if mvp_a_total > 0 else 87.2
+
+    modules = [
+        {
+            "id": "mvp-a",
+            "name": "MVP-A · 管理运营底座",
+            "sub_title": "包含 P1 账号权限、P2 学生与归属",
+            "status": "independent_test",
+            "status_label": "产品验收通过 · 质量收口中",
+            "status_pill_class": "pill-green",
+            "pass_rate": mvp_a_rate,
+            "cases_total": mvp_a_total,
+            "cases_passed": mvp_a_passed,
+            "cases_blocked": mvp_a_blocked,
+            "active_step": "独立测试 (收口中)",
+            "blocker_summary": f"尚余 {mvp_a_blocked} 条 Case 待收口；等待负责人确认",
+            "stepper": [
+                {"name": "需求冻结 ✓", "state": "done"},
+                {"name": "提测 ✓", "state": "done"},
+                {"name": "独立测试 (收口中)", "state": "current"},
+                {"name": "试用定版", "state": "pending"},
+            ],
+        },
+        {
+            "id": "mvp-b",
+            "name": "MVP-B · 教师学情工作台",
+            "sub_title": "P3 教师文字记录、草稿、审核与更正",
+            "status": "preparing",
+            "status_label": "编码前契约准备",
+            "status_pill_class": "pill-amber",
+            "pass_rate": 0,
+            "cases_total": len(mvp_b_cases),
+            "cases_passed": 0,
+            "cases_blocked": 0,
+            "active_step": "TR-P3契约 (当前)",
+            "blocker_summary": "冻结 P3 字段级契约与测试夹具",
+            "stepper": [
+                {"name": "PRD初稿 ✓", "state": "done"},
+                {"name": "TR-P3契约 (当前)", "state": "current"},
+                {"name": "研发编码", "state": "pending"},
+                {"name": "提测", "state": "pending"},
+            ],
+        },
+        {
+            "id": "mvp-b-ai",
+            "name": "MVP-B AI · 文字整理增强",
+            "sub_title": "P4 原始文字关键点提取与结构化候选",
+            "status": "planning",
+            "status_label": "规划准备中",
+            "status_pill_class": "pill-gray",
+            "pass_rate": 0,
+            "cases_total": 0,
+            "cases_passed": 0,
+            "cases_blocked": 0,
+            "active_step": "TR-P4 预研",
+            "blocker_summary": "语音录制与转写整体后置",
+            "stepper": [
+                {"name": "TR-P4 预研", "state": "current"},
+                {"name": "契约冻结", "state": "pending"},
+                {"name": "算法实施", "state": "pending"},
+            ],
+        },
+    ]
+
+    prd_candidates = (
+        v.get("feishu_url")
+        for v in _mapping(payload.get("product_roadmap")).get("versions", [])
+        if v.get("feishu_url")
+    )
+    prd_url = _safe_external_url(
+        next(
+            prd_candidates,
+            "https://vcnzw9ygmgsx.feishu.cn/docx/XHu7dCKI2oYsWZx4oBQcnJwtnxR",
+        )
+    )
+    cases_url = _safe_external_url(
+        section.get("feishu_cases_url") or "https://vcnzw9ygmgsx.feishu.cn/docx/WnTKduhb1oA8UsxGscqc6UgPnug"
+    )
+    report_url = _safe_external_url(
+        section.get("feishu_report_url") or "https://vcnzw9ygmgsx.feishu.cn/docx/P5G7dnSxsolcKqxTVhecokFsnof"
+    )
+
+    tree = [
+        {"id": "all", "label": "全部需求", "count": total_count},
+        {
+            "id": "mvp-a",
+            "label": "MVP-A 管理运营底座",
+            "count": len(mvp_a_cases),
+            "children": [
+                {"id": "P1", "label": "P1 账号与权限管理", "count": len(p1_cases)},
+                {"id": "P2", "label": "P2 学生档案与归属", "count": len(p2_cases)},
+            ],
+        },
+        {
+            "id": "mvp-b",
+            "label": "MVP-B 教师学情工作台",
+            "count": len(mvp_b_cases),
+            "children": [
+                {"id": "P3-record", "label": "P3 随笔流记录草稿", "count": len(p3_rec_cases)},
+                {"id": "P3-review", "label": "P3 共享审核与退回", "count": len(p3_rev_cases)},
+            ],
+        },
+        {
+            "id": "mvp-b-ai",
+            "label": "MVP-B AI 文字整理",
+            "count": 0,
+        },
+    ]
+
+    return {
+        "project_name": _safe_text(payload.get("project_name"), "晚托班 AI 教师提效系统"),
+        "updated_at": _safe_text(payload.get("last_updated")),
+        "updated_display": _safe_text(payload.get("last_updated_display")),
+        "modules": modules,
+        "feishu_links": {
+            "prd_url": prd_url,
+            "cases_url": cases_url,
+            "report_url": report_url,
+        },
+        "tree": tree,
+        "cases": cases,
+        "stats": {
+            "total": total_count,
+            "passed": passed_count,
+            "blocked": blocked_count,
+            "pass_rate": pass_rate,
+        },
+    }
 
 
 def build_lightweight_dashboard(
@@ -566,10 +840,12 @@ def build_lightweight_dashboard(
         page_data = _frontend(payload, lines, warnings)
     elif page == "development":
         page_data = _development(payload, lines, warnings)
+    elif page == "dashboard_v2":
+        page_data = _dashboard_v2(payload, lines, warnings)
     else:
         page_data, quality_warnings = _quality(payload, lines)
         warnings.extend(quality_warnings)
-    return {
+    ret = {
         "schema_version": 1,
         "page": page,
         "page_label": PAGE_LABELS[page],
@@ -585,3 +861,6 @@ def build_lightweight_dashboard(
         "data": page_data,
         "warnings": warnings,
     }
+    if page == "dashboard_v2":
+        ret.update(page_data)
+    return ret

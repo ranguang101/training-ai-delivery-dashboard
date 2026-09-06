@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>晚托班 AI 教师提效系统 · 交付看板 (方案四：融合架构 v2.0)</title>
+  <link rel="stylesheet" href="/static/fusion-dashboard.css">
+</head>
+<body data-dashboard-mode="v2-fusion" data-dashboard-page="{{ page }}" data-dashboard-revision="{{ initial_revision }}">
+
+  <!-- Topbar -->
+  <header class="app-header">
+    <div class="header-inner">
+      <div class="brand-group">
+        <div class="brand-logo">P</div>
+        <h1 class="brand-title">晚托班 AI 教师提效系统 · 交付看板</h1>
+        <span class="badge-status" title="当前运行于 127.0.0.1:8013，已连接 project-status.json">本地只读监控联通中</span>
+      </div>
+
+      <!-- Core Feishu Documents -->
+      <div class="feishu-hub">
+        <a id="link-feishu-prd" href="https://vcnzw9ygmgsx.feishu.cn/docx/XHu7dCKI2oYsWZx4oBQcnJwtnxR" target="_blank" rel="noopener noreferrer" class="feishu-btn highlight">
+          📄 MVP-A PRD v2.2 ↗
+        </a>
+        <a id="link-feishu-cases" href="https://vcnzw9ygmgsx.feishu.cn/docx/WnTKduhb1oA8UsxGscqc6UgPnug" target="_blank" rel="noopener noreferrer" class="feishu-btn highlight">
+          📊 47条用例全表 ↗
+        </a>
+        <a id="link-feishu-report" href="https://vcnzw9ygmgsx.feishu.cn/docx/P5G7dnSxsolcKqxTVhecokFsnof" target="_blank" rel="noopener noreferrer" class="feishu-btn highlight">
+          📑 RUN-008收口报告 ↗
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="app-container">
+
+    <!-- SECTION 1: PLANE-STYLE MODULES EXECUTIVE TRACK (TOP) -->
+    <section>
+      <div class="section-title">
+        <span>🚀 交付版本与核心推进大盘 (Plane 模块卡片群)</span>
+      </div>
+      <div class="modules-grid" id="modules-grid">
+        <!-- Module cards populated dynamically by fusion-dashboard.js -->
+      </div>
+    </section>
+
+    <!-- SECTION 2: METERSPHERE DUAL-PANE TEST WORKBENCH (BOTTOM) -->
+    <section>
+      <div class="section-title">
+        <span>🧪 测试用例与质量生命周期工作台 (MeterSphere 树形 + 表格)</span>
+      </div>
+
+      <div class="workbench-card">
+        
+        <!-- Left Pane: Requirement Tree -->
+        <aside class="tree-pane">
+          <div class="tree-pane-head">
+            <div class="tree-title">
+              <span>需求与功能模块</span>
+              <span style="font-size: 11px; color: var(--text-muted);">点击即时过滤</span>
+            </div>
+            <div class="search-box">
+              <span class="search-icon">🔍</span>
+              <input type="text" id="tree-search-input" class="search-input" placeholder="搜索模块或用例...">
+            </div>
+          </div>
+
+          <div class="tree-list" id="tree-list-container">
+            <!-- Tree nodes populated dynamically by fusion-dashboard.js -->
+          </div>
+        </aside>
+
+        <!-- Right Pane: Filterable Case Table -->
+        <main class="table-pane">
+          <div class="table-pane-head">
+            <div class="selected-meta">
+              <span class="selected-title" id="pane-title">全部需求</span>
+              <div class="selected-stats" id="pane-stats">
+                <span>共 <strong id="stat-total">47</strong> 条</span>
+                <span>·</span>
+                <span>通过 <strong class="green" id="stat-passed">41</strong> 条 <span id="stat-rate">(87.2%)</span></span>
+                <span>·</span>
+                <span>阻塞 <strong class="amber" id="stat-blocked">6</strong> 条</span>
+              </div>
+            </div>
+
+            <div class="table-actions">
+              <div class="filter-group">
+                <button class="filter-tab active" data-status="all">全部</button>
+                <button class="filter-tab" data-status="passed">通过 (41)</button>
+                <button class="filter-tab" data-status="blocked">阻塞 (6)</button>
+              </div>
+              <a id="sub-link-feishu-cases" href="https://vcnzw9ygmgsx.feishu.cn/docx/WnTKduhb1oA8UsxGscqc6UgPnug" target="_blank" rel="noopener noreferrer" class="feishu-btn">
+                在飞书查看完整矩阵 ↗
+              </a>
+            </div>
+          </div>
+
+          <div class="table-wrap">
+            <table class="cases-table">
+              <thead>
+                <tr>
+                  <th style="width: 140px;">用例编号</th>
+                  <th style="width: 130px;">模块归属</th>
+                  <th>用例标题</th>
+                  <th style="width: 130px;">自动化方式</th>
+                  <th style="width: 100px;">执行状态</th>
+                  <th style="width: 90px;">操作</th>
+                </tr>
+              </thead>
+              <tbody id="case-tbody">
+                <!-- Case rows populated dynamically by fusion-dashboard.js -->
+              </tbody>
+            </table>
+          </div>
+        </main>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Drawer Backdrop -->
+  <div id="drawer-backdrop" class="drawer-backdrop"></div>
+
+  <!-- Slide-out Drawer Panel -->
+  <aside id="drawer-panel" class="drawer-panel">
+    <div class="drawer-head">
+      <div>
+        <div id="drawer-case-id" class="drawer-case-id">MVP-A-MAIN-001</div>
+        <h2 id="drawer-title" class="drawer-title">用例详情</h2>
+      </div>
+      <button id="drawer-close-btn" class="drawer-close-btn">✕</button>
+    </div>
+
+    <div class="drawer-body">
+      <div class="drawer-section">
+        <div class="drawer-label">执行结论</div>
+        <div id="drawer-status" class="drawer-val"></div>
+      </div>
+
+      <div class="drawer-section">
+        <div class="drawer-label">前置条件</div>
+        <div id="drawer-precond" class="drawer-val"></div>
+      </div>
+
+      <div class="drawer-section">
+        <div class="drawer-label">测试操作步骤</div>
+        <pre id="drawer-steps" class="code-block"></pre>
+      </div>
+
+      <div class="drawer-section">
+        <div class="drawer-label">预期结果</div>
+        <div id="drawer-expected" class="drawer-val"></div>
+      </div>
+
+      <div class="drawer-section">
+        <div class="drawer-label">实际执行情况与下一步</div>
+        <div id="drawer-actual" class="drawer-val"></div>
+      </div>
+
+      <div class="feishu-box">
+        <div>
+          <div style="font-size: 13px; font-weight: 700; color: #1e3a8a;">飞书协同表格</div>
+          <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">在线协同打勾、多人批注或导出 Excel</div>
+        </div>
+        <a id="drawer-feishu-btn" href="https://vcnzw9ygmgsx.feishu.cn/docx/WnTKduhb1oA8UsxGscqc6UgPnug" target="_blank" rel="noopener noreferrer" class="feishu-btn highlight">
+          飞书用例表直达 ↗
+        </a>
+      </div>
+    </div>
+  </aside>
+
+  <script src="/static/fusion-dashboard.js"></script>
+</body>
+</html>
