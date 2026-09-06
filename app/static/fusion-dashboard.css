@@ -98,6 +98,19 @@
       background: var(--green);
     }
 
+    /* Header Global Meta */
+    .header-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+    .header-meta .meta-divider {
+      color: var(--border);
+    }
+
     /* Feishu Hub */
     .feishu-hub {
       display: flex;
@@ -278,6 +291,61 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+    }
+
+    /* In-Card Asset Bar (Scheme B) */
+    .card-asset-bar {
+      margin-top: 14px;
+      padding-top: 10px;
+      border-top: 1px dashed var(--border);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .card-asset-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+      margin-right: 2px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .card-asset-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 9px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--primary);
+      background: var(--primary-soft);
+      border: 1px solid rgba(37, 99, 235, 0.2);
+      border-radius: 99px;
+      text-decoration: none;
+      transition: all 0.15s ease;
+      cursor: pointer;
+      line-height: 1.4;
+    }
+    .card-asset-pill:hover {
+      background: #dbeafe;
+      border-color: var(--primary);
+      color: #1d4ed8;
+      transform: translateY(-1px);
+    }
+    .card-asset-pill.is-disabled {
+      background: #f1f5f9;
+      color: #94a3b8;
+      border-color: #e2e8f0;
+      cursor: not-allowed;
+      transform: none;
+    }
+    .card-asset-pill.is-disabled:hover {
+      background: #f1f5f9;
+      color: #94a3b8;
+      border-color: #e2e8f0;
+      transform: none;
     }
 
     /* SECTION 2: METERSPHERE-STYLE DUAL PANE WORKBENCH (BOTTOM) */

@@ -249,6 +249,51 @@
         </div>
       `;
 
+      // In-Card Asset Bar (Scheme B: Decoupled from Header)
+      const feishu = mod.feishu_links || {};
+      let assetsHtml = '';
+
+      if (mod.id === 'mvp-a') {
+        const prdLink = feishu.prd_url
+          ? `<a class="card-asset-pill" href="${escapeHtml(feishu.prd_url)}" target="_blank" rel="noopener noreferrer">📄 PRD v2.2 ↗</a>`
+          : '';
+        const casesLink = feishu.cases_url
+          ? `<a class="card-asset-pill" href="${escapeHtml(feishu.cases_url)}" target="_blank" rel="noopener noreferrer">📊 47条用例全表 ↗</a>`
+          : '';
+        const reportLink = feishu.report_url
+          ? `<a class="card-asset-pill" href="${escapeHtml(feishu.report_url)}" target="_blank" rel="noopener noreferrer">📑 RUN-008报告 ↗</a>`
+          : '';
+        assetsHtml = prdLink + casesLink + reportLink;
+      } else if (mod.id === 'mvp-b') {
+        const prdLink = feishu.prd_url
+          ? `<a class="card-asset-pill" href="${escapeHtml(feishu.prd_url)}" target="_blank" rel="noopener noreferrer">📄 PRD初稿 ↗</a>`
+          : `<span class="card-asset-pill is-disabled">📄 PRD初稿 (内部草稿)</span>`;
+        const casesPlaceholder = `<span class="card-asset-pill is-disabled" data-toast="💡 MVP-B 当前处于需求契约准备阶段，测试用例矩阵待研发提测后生成">📊 用例矩阵 (待提测) ⊘</span>`;
+        assetsHtml = prdLink + casesPlaceholder;
+      } else if (mod.id === 'mvp-b-ai') {
+        assetsHtml = `<span class="card-asset-pill is-disabled" data-toast="💡 MVP-B AI 处于规划准备期，用例矩阵尚未建立">💡 规划预研中</span>`;
+      }
+
+      if (assetsHtml) {
+        const assetBar = document.createElement('div');
+        assetBar.className = 'card-asset-bar';
+        assetBar.innerHTML = `<span class="card-asset-label">🔗 核心资产:</span>` + assetsHtml;
+
+        // 阻止向上冒泡触发卡片切换
+        assetBar.querySelectorAll('.card-asset-pill').forEach(function (pill) {
+          pill.addEventListener('click', function (e) {
+            e.stopPropagation();
+            const toastMsg = pill.getAttribute('data-toast');
+            if (toastMsg) {
+              e.preventDefault();
+              showToast(toastMsg);
+            }
+          });
+        });
+
+        card.appendChild(assetBar);
+      }
+
       card.addEventListener('click', function () {
         document.querySelectorAll('.module-card').forEach(c => c.classList.remove('active-module'));
         card.classList.add('active-module');

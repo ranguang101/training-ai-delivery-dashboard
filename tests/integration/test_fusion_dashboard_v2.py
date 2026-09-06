@@ -29,6 +29,8 @@ def test_fusion_dashboard_v2_page_renders_cleanly() -> None:
         assert 'id="case-tbody"' in resp.text
         assert 'id="drawer-panel"' in resp.text
         assert 'id="toast-container"' in resp.text
+        assert 'header-meta' in resp.text
+        assert 'class="feishu-hub"' not in resp.text
         assert 'fusion-dashboard.css' in resp.text
         assert 'fusion-dashboard.js' in resp.text
 

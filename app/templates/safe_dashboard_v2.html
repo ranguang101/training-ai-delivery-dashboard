@@ -17,17 +17,11 @@
         <span class="badge-status" title="当前运行于 127.0.0.1:8013，已连接 project-status.json">本地只读监控联通中</span>
       </div>
 
-      <!-- Core Feishu Documents -->
-      <div class="feishu-hub">
-        <a id="link-feishu-prd" href="https://vcnzw9ygmgsx.feishu.cn/docx/XHu7dCKI2oYsWZx4oBQcnJwtnxR" target="_blank" rel="noopener noreferrer" class="feishu-btn highlight">
-          📄 MVP-A PRD v2.2 ↗
-        </a>
-        <a id="link-feishu-cases" href="https://vcnzw9ygmgsx.feishu.cn/docx/WnTKduhb1oA8UsxGscqc6UgPnug" target="_blank" rel="noopener noreferrer" class="feishu-btn highlight">
-          📊 47条用例全表 ↗
-        </a>
-        <a id="link-feishu-report" href="https://vcnzw9ygmgsx.feishu.cn/docx/P5G7dnSxsolcKqxTVhecokFsnof" target="_blank" rel="noopener noreferrer" class="feishu-btn highlight">
-          📑 RUN-008收口报告 ↗
-        </a>
+      <!-- Global Status Meta (Decoupled from specific modules) -->
+      <div class="header-meta">
+        <span class="meta-item">⏱️ 10秒自动轮询</span>
+        <span class="meta-divider">·</span>
+        <span class="meta-item" id="header-sync-status">🟢 数据源联通</span>
       </div>
     </div>
   </header>

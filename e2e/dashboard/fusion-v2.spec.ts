@@ -2,31 +2,36 @@ import { expect, test } from '@playwright/test';
 
 test.describe('PRD v2.0 Fusion Dashboard (Plane + MeterSphere)', () => {
 
-  test('v2 page loads with topbar feishu links, 3 plane cards, tree and case table', async ({ page }) => {
+  test('v2 page loads with decoupled topbar header, in-card assets bar (Scheme B), tree and case table', async ({ page }) => {
     await page.goto('/project-status/v2');
 
-    // 1. Topbar elements
+    // 1. Topbar elements (decoupled from module-specific docs)
     await expect(page.locator('.brand-title')).toContainText('晚托班 AI 教师提效系统');
     await expect(page.locator('.badge-status')).toContainText('本地只读监控联通中');
+    await expect(page.locator('.header-meta')).toBeVisible();
+    await expect(page.locator('#link-feishu-prd')).toHaveCount(0);
 
-    // 3 Feishu Buttons
-    const prdBtn = page.locator('#link-feishu-prd');
-    await expect(prdBtn).toBeVisible();
-    await expect(prdBtn).toHaveAttribute('target', '_blank');
-    await expect(prdBtn).toHaveAttribute('href', /feishu\.cn/);
-
-    const casesBtn = page.locator('#link-feishu-cases');
-    await expect(casesBtn).toBeVisible();
-    await expect(casesBtn).toHaveAttribute('target', '_blank');
-
-    const reportBtn = page.locator('#link-feishu-report');
-    await expect(reportBtn).toBeVisible();
-    await expect(reportBtn).toHaveAttribute('target', '_blank');
-
-    // 2. Plane Executive Cards
+    // 2. Plane Executive Cards & In-Card Assets (Scheme B)
     const moduleCards = page.locator('.module-card');
     await expect(moduleCards).toHaveCount(3);
-    await expect(page.locator('.module-card[data-module-id="mvp-a"]')).toHaveClass(/active-module/);
+    const mvpACard = page.locator('.module-card[data-module-id="mvp-a"]');
+    await expect(mvpACard).toHaveClass(/active-module/);
+
+    // MVP-A in-card assets
+    await expect(mvpACard.locator('.card-asset-bar')).toBeVisible();
+    const mvpAPills = mvpACard.locator('.card-asset-pill');
+    await expect(mvpAPills).toHaveCount(3);
+    await expect(mvpAPills.first()).toHaveAttribute('href', /feishu\.cn/);
+    await expect(mvpAPills.first()).toHaveAttribute('target', '_blank');
+
+    // MVP-B in-card assets & stopPropagation check
+    const mvpBCard = page.locator('.module-card[data-module-id="mvp-b"]');
+    await expect(mvpBCard.locator('.card-asset-bar')).toBeVisible();
+    const disabledPill = mvpBCard.locator('.card-asset-pill.is-disabled').first();
+    await expect(disabledPill).toBeVisible();
+    // Clicking in-card pill should NOT activate MVP-B card due to stopPropagation
+    await disabledPill.click();
+    await expect(mvpACard).toHaveClass(/active-module/);
 
     // 3. Tree and Table
     await expect(page.locator('#tree-list-container')).toBeVisible();
