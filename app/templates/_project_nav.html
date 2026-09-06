@@ -1,15 +1,20 @@
 {% set current_path = request.url.path %}
 {% set is_overview = current_path == "/project-status" %}
 {% set is_workspace = current_path.startswith("/project-status/workspaces") %}
-{% set is_quality = current_path.startswith("/project-status/tests") %}
+{% set is_quality = current_path.startswith("/project-status/tests/requirements") %}
+{% set is_delivery_detail = current_path.startswith("/project-status/delivery-lines") %}
 <div class="project-nav-stack">
   <nav class="console-nav console-nav-primary" aria-label="项目一级导航">
     <a class="{% if is_overview %}is-active{% endif %}" data-r3-nav="overview" href="/project-status">项目总览</a>
-    <a class="{% if is_workspace or is_quality %}is-active{% endif %}" data-r3-nav="workspace" href="/project-status/workspaces">工作区</a>
+    <a class="{% if current_path == '/project-status/product' %}is-active{% endif %}" href="/project-status/product">产品 / PRD</a>
+    <a class="{% if current_path == '/project-status/frontend' %}is-active{% endif %}" href="/project-status/frontend">前端交付</a>
+    <a class="{% if current_path == '/project-status/development' %}is-active{% endif %}" href="/project-status/development">服务端交付</a>
+    <a class="{% if current_path == '/project-status/tests' %}is-active{% endif %}" href="/project-status/tests">质量 / 测试</a>
   </nav>
 
-  {% if is_workspace or is_quality %}
+  {% if is_workspace or is_quality or is_delivery_detail %}
   <nav class="console-subnav" aria-label="工作区二级导航">
+    <a class="{% if is_workspace %}is-active{% endif %}" data-r3-nav="workspace" href="/project-status/workspaces">R3 轻量监控</a>
     <a class="{% if current_path == '/project-status/workspaces' %}is-active{% endif %}" href="/project-status/workspaces">协作总览</a>
     <a class="{% if current_path == '/project-status/workspaces/development' %}is-active{% endif %}" href="/project-status/workspaces/development">服务端工作区</a>
     <a class="{% if current_path == '/project-status/workspaces/frontend' %}is-active{% endif %}" href="/project-status/workspaces/frontend">前端工作区</a>

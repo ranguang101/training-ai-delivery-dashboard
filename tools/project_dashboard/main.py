@@ -39,7 +39,7 @@ def create_dashboard_app(
     # clone never falls back to stale assets from the project being observed.
     root = (project_root or DEFAULT_DASHBOARD_DATA_ROOT).resolve()
     app = FastAPI(
-        title="晚托班 AI 教师提效系统｜项目管理面板",
+        title="项目交付看板｜本地监控",
         version="1.0",
         docs_url=None,
         redoc_url=None,

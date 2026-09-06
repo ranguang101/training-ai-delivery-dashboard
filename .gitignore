@@ -14,3 +14,5 @@ reports/test-runs/*/
 !reports/test-runs/.gitkeep
 
 data/_evidence/
+*.log
+dashboard-*.log

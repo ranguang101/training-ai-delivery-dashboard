@@ -7,7 +7,7 @@
     <title>按需求质量追踪 | 项目交付看板</title>
     <link rel="stylesheet" href="{{ url_for('static', path='/project-status.css') }}?v=r4-quality-v1">
   </head>
-  <body data-dashboard-mode="read_only_local">
+  <body data-dashboard-mode="read_only_local" data-dashboard-revision="{{ initial_revision or '' }}">
     <header class="topbar">
       <div><h1>项目交付看板</h1></div>
       <div class="topbar-actions">

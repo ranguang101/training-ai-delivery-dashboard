@@ -151,6 +151,11 @@
 
   function r3SyncNavLine(line) {
     document
+      .querySelectorAll('.console-nav-primary a[href^="/project-status"]')
+      .forEach((link) => {
+        link.href = r3LineHref(link.getAttribute('href') || '/project-status', line);
+      });
+    document
       .querySelectorAll('.console-subnav a[href^="/project-status/workspaces"]')
       .forEach((link) => {
         link.href = r3LineHref(link.getAttribute('href') || link.href, line);
@@ -282,6 +287,12 @@
     article.append(r3MetaRow('最近核对时间', textOr(line.verified_at, COPY_DATE_MISSING)));
 
     const actions = el('div', 'r3-item-actions');
+    const detailLink = el('a', 'r3-action-link', '查看交付线详情');
+    detailLink.href = r3LineHref(
+      `/project-status/delivery-lines/${encodeURIComponent(line.delivery_line_id)}`,
+      line.delivery_line_id,
+    );
+    actions.append(detailLink);
     const overviewLink = el('a', 'r3-action-link', '查看项目总览');
     overviewLink.href = r3LineHref('/project-status', line.delivery_line_id);
     actions.append(overviewLink);

@@ -18,6 +18,44 @@ test('four workspace pages render exactly four fixed cards in fixed order', asyn
   }
 });
 
+test('R3 conclusion opens the generic delivery-line detail page', async ({ page }) => {
+  await page.goto('/project-status/workspaces');
+  await expect(page.locator('[data-r3-workspace]')).not.toHaveAttribute('aria-busy', 'true');
+  await page.getByRole('link', { name: '查看交付线详情' }).first().click();
+  await expect(page).toHaveURL(/\/project-status\/delivery-lines\/[A-Za-z0-9_.:-]+/);
+  await expect(page.locator('#delivery-detail-title')).toHaveText('交付线通用详情');
+  await expect(page.locator('[data-delivery-detail]')).not.toHaveAttribute('aria-busy', 'true');
+  await expect(page.locator('[data-delivery-detail]')).toContainText('详情资料待关联');
+});
+
+test('source revision change refreshes the current projection', async ({ page }) => {
+  const sourcePage = await page.request.get('/project-status/workspaces');
+  const sourceHtml = await sourcePage.text();
+  const initialRevision = sourceHtml.match(/data-dashboard-revision="([^"]+)"/)?.[1];
+  expect(initialRevision).toBeTruthy();
+
+  let syncCalls = 0;
+  await page.route('**/api/v1/project-status', async (route) => {
+    syncCalls += 1;
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        success: true,
+        data: {
+          project_name: '交付看板演示项目',
+          last_updated: '2026-08-25T10:00:00+08:00',
+          revision: syncCalls === 1 ? 'changed-revision' : initialRevision,
+        },
+      }),
+    });
+  });
+
+  await page.goto('/project-status/workspaces');
+  await expect.poll(() => syncCalls).toBeGreaterThan(1);
+  await expect(page.locator('[data-r3-workspace]')).not.toHaveAttribute('aria-busy', 'true');
+});
+
 test('five fact types keep their fixed card assignment', async ({ page }) => {
   await page.goto('/project-status/workspaces');
   await expect(page.locator('[data-r3-workspace]')).not.toHaveAttribute('aria-busy', 'true');
@@ -94,12 +132,9 @@ test('line filter is kept on refresh, workspace switch, and overview return focu
 
   await page.getByRole('link', { name: '返回项目总览' }).first().click();
   await expect(page).toHaveURL(
-    /\/project-status\/workspaces[?&]line=mvp-b-manual-daily-record/,
+    /\/project-status[?&]line=mvp-b-manual-daily-record/,
   );
-  await expect(page.locator('#r3-line-select')).toHaveValue('mvp-b-manual-daily-record');
-  await expect(page.locator('[data-r3-card="conclusion"]')).toContainText(
-    'MVP-B v0.1 人工每日记录闭环',
-  );
+  await expect(page.locator('#lightweight-line-select')).toHaveValue('mvp-b-manual-daily-record');
 });
 
 test('all three delivery lines keep their filter across all four pages', async ({ page }) => {
@@ -208,28 +243,23 @@ test('empty projection shows the fixed empty state on every card', async ({ page
   await expect(page.locator('.r3-alert')).toContainText('当前无此类事实');
 });
 
-test('top navigation keeps the line filter from overview and workspace pages', async ({ page }) => {
-  await page.goto('/project-status?line=mvp-b-manual-daily-record');
-  await expect(page).toHaveURL(
-    /\/project-status\/workspaces[?&]line=mvp-b-manual-daily-record/,
-  );
+test('primary navigation keeps the line filter while R3 remains available as a subnav', async ({ page }) => {
+  await page.goto('/project-status/workspaces?line=mvp-b-manual-daily-record');
   await expect(page.locator('#r3-line-select')).toHaveValue('mvp-b-manual-daily-record');
   const primaryNav = page.getByRole('navigation', { name: '项目一级导航' });
-  await expect(primaryNav.getByRole('link', { name: '工作区' })).toHaveAttribute(
+  await expect(primaryNav.getByRole('link', { name: '项目总览' })).toHaveAttribute(
     'href',
     /line=mvp-b-manual-daily-record/,
   );
-  await primaryNav.getByRole('link', { name: '工作区' }).click();
-  await expect(page).toHaveURL(/\/project-status\/workspaces[?&]line=mvp-b-manual-daily-record/);
-  await expect(page.locator('#r3-line-select')).toHaveValue('mvp-b-manual-daily-record');
-  await expect(page.locator('[data-r3-card="conclusion"]')).toContainText('MVP-B v0.1 人工每日记录闭环');
-  await expect(page.locator('[data-r3-card="conclusion"]')).not.toContainText('MVP-A 管理运营底座');
+  await primaryNav.getByRole('link', { name: '项目总览' }).click();
+  await expect(page).toHaveURL(/\/project-status[?&]line=mvp-b-manual-daily-record/);
+  await expect(page.locator('#lightweight-line-select')).toHaveValue('mvp-b-manual-daily-record');
 
   await page.goto('/project-status/workspaces/testing?line=mvp-b-manual-daily-record');
   await expect(page.locator('[data-r3-workspace]')).not.toHaveAttribute('aria-busy', 'true');
-  await primaryNav.getByRole('link', { name: '工作区' }).click();
-  await expect(page).toHaveURL(/\/project-status\/workspaces[?&]line=mvp-b-manual-daily-record/);
-  await expect(page.locator('#r3-line-select')).toHaveValue('mvp-b-manual-daily-record');
+  await page.getByRole('navigation', { name: '项目一级导航' }).getByRole('link', { name: '项目总览' }).click();
+  await expect(page).toHaveURL(/\/project-status[?&]line=mvp-b-manual-daily-record/);
+  await expect(page.locator('#lightweight-line-select')).toHaveValue('mvp-b-manual-daily-record');
 });
 
 test('top navigation follows the latest selected delivery line', async ({ page }) => {
@@ -243,7 +273,7 @@ test('top navigation follows the latest selected delivery line', async ({ page }
     'href',
     /line=mvp-b-text-ai-enhancement/,
   );
-  await expect(primaryNav.getByRole('link', { name: '工作区' })).toHaveAttribute(
+  await expect(primaryNav.getByRole('link', { name: '产品 / PRD' })).toHaveAttribute(
     'href',
     /line=mvp-b-text-ai-enhancement/,
   );

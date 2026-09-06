@@ -117,10 +117,11 @@
     const caseBody = el('div', 'qw-card-content');
     const caseMetrics = el('div', 'qw-metrics');
     caseMetrics.append(
-      metric('正式 Case', cases.total || 0), metric('已执行', cases.executed || 0),
-      metric('通过', cases.passed || 0), metric('失败/阻塞', `${cases.failed || 0}/${cases.blocked || 0}`),
+      metric('正式 Case', cases.total || 0), metric('已有结果', cases.with_evidence || 0),
+      metric('正式通过', cases.formal_passed || 0), metric('待确认', cases.pending_review || 0),
+      metric('未执行', cases.not_executed || 0), metric('未通过/阻塞', `${cases.formal_failed || 0}/${cases.formal_blocked || 0}`),
     );
-    caseBody.append(caseMetrics, el('p', 'qw-card-note', `自动化 ${cases.automated || 0} · 人工 ${cases.manual || 0} · 最近：${executionLabels[cases.latest_execution_status] || copy.missing}`));
+    caseBody.append(caseMetrics, el('p', 'qw-card-note', `已登记执行结果 ${cases.executed || 0} 条 · 自动化 ${cases.automated || 0} · 人工/混合 ${cases.manual || 0}`));
 
     const automation = data.cards.assisted_automation || {};
     const automationBody = el('div', 'qw-card-content');
@@ -192,13 +193,20 @@
 
   function caseItem(item) {
     const node = el('article', 'qw-detail-item');
-    node.append(
+    const parts = [
       el('h4', '', `${safeText(item.case_id)} · ${safeText(item.title)}`),
-      pill(safeText(item.latest_execution && item.latest_execution.execution_status_label, '未执行'), item.latest_execution && item.latest_execution.execution_status),
+      pill(safeText(item.case_status_label, '待确认'), item.case_status),
+      el('p', 'qw-card-note', item.review_status === 'case_review_pending' ? '审核：待审核' : '审核：已确认'),
+      el('p', '', `实际结果：${safeText(item.actual_result)}`),
       el('p', '', `前置：${safeText(item.preconditions)}`),
       el('p', '', `步骤：${safeText(item.steps)}`),
       el('p', '', `预期：${safeText(item.expected_result)}`),
-    );
+      el('p', 'qw-card-note', `证据：${safeText(item.evidence_summary)} · 下一步：${safeText(item.next_action)}`),
+    ];
+    if (item.latest_execution) {
+      parts.splice(2, 0, el('p', 'qw-card-note', `最近执行：${safeText(item.latest_execution.execution_status_label)} · ${safeText(item.latest_execution.executed_at)}`));
+    }
+    node.append(...parts);
     return node;
   }
 
@@ -207,7 +215,7 @@
     node.append(
       el('h4', '', safeText(item.automation_run_id)),
       pill(safeText(item.automation_status_label), item.automation_status),
-      el('p', '', `断言：${item.assertion_total || 0} 项，失败 ${item.assertion_failed || 0} 项。`),
+      el('p', '', item.assertion_total ? `断言：${item.assertion_total} 项，失败 ${item.assertion_failed || 0} 项。` : `已登记 ${item.run_count || 1} 条辅助执行结果；断言明细未汇总。`),
       el('p', '', safeText(item.safe_summary)),
       el('p', 'qw-card-boundary', '辅助自动化，不等于正式准出'),
     );
@@ -252,7 +260,7 @@
     });
     overview.append(facts);
     shell.append(overview);
-    shell.append(detailList('Case 列表', 'cases', sections.cases || [], caseItem, copy.noCases, (render) => filterControls('执行状态', [['', '全部状态'], ['passed', '通过'], ['failed', '失败'], ['blocked', '阻塞'], ['not_executed', '未执行']], (value) => render((item) => !value || (item.latest_execution ? item.latest_execution.execution_status === value : value === 'not_executed')))));
+    shell.append(detailList('Case 列表', 'cases', sections.cases || [], caseItem, copy.noCases, (render) => filterControls('Case 状态', [['', '全部状态'], ['passed', '通过'], ['failed', '未通过'], ['pending_review', '待确认'], ['blocked', '阻塞'], ['not_executed', '未执行']], (value) => render((item) => !value || item.case_status === value))));
     shell.append(detailList('辅助自动化运行', 'automation', sections.automation || [], automationItem, copy.noAutomation, (render) => filterControls('运行状态', [['', '全部状态'], ['passed_pending_human', '待人工确认'], ['reviewed', '已确认'], ['failed', '失败']], (value) => render((item) => !value || item.automation_status === value))));
     shell.append(detailList('Jira / 缺陷与复测', 'defects', sections.defects || [], defectItem, copy.noDefects, (render) => filterControls('缺陷状态', [['', '全部状态'], ['open', 'Open'], ['in_progress', '修复中'], ['closed', '已关闭']], (value) => render((item) => !value || item.status === value))));
     shell.append(detailList('最终测试报告', 'reports', sections.reports || [], reportItem, copy.noReport));

@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light">
+    <title>受控证据 | 项目交付看板</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='/project-status.css') }}?v=delivery-detail-v1">
+  </head>
+  <body data-dashboard-mode="read_only_local">
+    <header class="topbar">
+      <div><h1>项目交付看板</h1></div>
+      <div class="topbar-actions">
+        {% include "_project_nav.html" %}
+        <div class="sync-panel" aria-live="polite">
+          <span class="sync-dot"></span>
+          <div><strong id="sync-status">只读查看</strong><span>仅显示安全摘要</span></div>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="safe-workspace-hero delivery-detail-hero" aria-labelledby="evidence-title">
+        <div>
+          <p class="safe-workspace-back"><a href="{{ return_href }}">返回交付线详情</a></p>
+          <h2 id="evidence-title">受控证据</h2>
+          <p>只显示登记后的安全摘要，不展示原始文档、报告、日志、环境、源代码路径或外链。</p>
+        </div>
+      </section>
+
+      <section class="section-block delivery-evidence-section" aria-labelledby="evidence-summary-title">
+        <div class="section-heading">
+          <div><h2 id="evidence-summary-title">证据摘要</h2></div>
+          <p>证据状态由服务端登记状态和核对时间提供，页面不自行推断。</p>
+        </div>
+        <article class="delivery-evidence-card">
+          <div class="delivery-detail-kicker">{{ detail.evidence_type }} · {{ detail.evidence_id }}</div>
+          <h3>{{ detail.safe_title }}</h3>
+          <p>{{ detail.safe_summary }}</p>
+          <dl class="delivery-detail-meta">
+            <div><dt>状态</dt><dd>{{ detail.validity_state }}</dd></div>
+            <div><dt>来源角色</dt><dd>{{ detail.source_role }}</dd></div>
+            <div><dt>最近核对</dt><dd>{{ detail.verified_at or '待关联' }}</dd></div>
+          </dl>
+        </article>
+      </section>
+    </main>
+
+    <footer><span>受控证据仅用于只读追踪，不构成验收或发布操作。</span></footer>
+  </body>
+</html>

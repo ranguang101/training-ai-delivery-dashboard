@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import shutil
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta, timezone
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -64,6 +64,160 @@ def minimal_project_status(
     return project
 
 
+def delivery_line_fixture(
+    evidence_level: str,
+    *,
+    ordinal: int = 1,
+    delivery_status: str = "integration",
+    contract_status: str | None = None,
+    candidate_status: str | None = None,
+    runtime_status: str | None = None,
+    open_blockers: list[dict] | None = None,
+) -> dict:
+    """Build a synthetic top-level delivery line for D-level relation tests."""
+    rank = (
+        int(evidence_level[1:])
+        if len(evidence_level) == 2 and evidence_level[1].isdigit()
+        else 0
+    )
+    contract_status = contract_status or ("frozen" if rank >= 3 else "not_frozen")
+    candidate_status = candidate_status or ("fixed" if rank >= 3 else "not_fixed")
+    runtime_status = runtime_status or (
+        "passed" if rank >= 6 else "evidence_ready" if rank >= 5 else "open"
+    )
+    evidence_links = []
+    if rank:
+        evidence_links.append(
+            {
+                "id": f"FIXTURE-EVIDENCE-{ordinal}-BASE",
+                "kind": "document",
+                "evidence_level": evidence_level,
+                "status": "confirmed",
+                "source_role": "product",
+                "safe_summary": f"Synthetic evidence {ordinal}",
+            }
+        )
+    if rank >= 5:
+        evidence_links.append(
+            {
+                "id": f"FIXTURE-EVIDENCE-{ordinal}-TEST",
+                "kind": "test_run",
+                "evidence_level": "D5",
+                "status": "passed",
+                "source_role": "testing",
+                "safe_summary": f"Synthetic test evidence {ordinal}",
+            }
+        )
+    if rank >= 6:
+        evidence_links.append(
+            {
+                "id": f"FIXTURE-EVIDENCE-{ordinal}-CONFIRM",
+                "kind": "handoff",
+                "evidence_level": "D6",
+                "status": "confirmed",
+                "source_role": "project_owner",
+                "safe_summary": f"Synthetic confirmation {ordinal}",
+            }
+        )
+    return {
+        "id": f"fixture-line-{ordinal}",
+        "delivery_track": f"fixture-track-{ordinal}",
+        "name": f"Synthetic delivery line {ordinal}",
+        "summary": f"Synthetic line summary {ordinal}",
+        "delivery_status": delivery_status,
+        "evidence_level": evidence_level,
+        "verified_at": r3_time(),
+        "updated_at": r3_time(),
+        "source_role": "development",
+        "contract_state": {"status": contract_status, "safe_summary": "Synthetic contract"},
+        "candidate_version": {"status": candidate_status, "safe_summary": "Synthetic candidate"},
+        "runtime_gate": {"status": runtime_status, "safe_summary": "Synthetic runtime"},
+        "scope_in": [],
+        "scope_out": [],
+        "evidence_links": evidence_links,
+        "open_blockers": open_blockers or [],
+    }
+
+
+def quality_workspace_fixture(
+    *,
+    case_statuses: tuple[str, ...] = ("passed", "failed", "blocked", "not_executed"),
+    automation_kinds: tuple[str, ...] = ("automated", "manual", "manual", "automated"),
+    defect_statuses: tuple[str, ...] = ("in_progress", "ready_for_retest", "closed"),
+) -> dict:
+    """Build synthetic quality records without copying a real project instance."""
+    cases = []
+    executions = []
+    for index, case_status in enumerate(case_statuses, 1):
+        case_id = f"FIXTURE-CASE-{index}"
+        cases.append(
+            {
+                "case_id": case_id,
+                "quality_requirement_id": "FIXTURE-QUALITY-1",
+                "case_status": case_status,
+                "automation_kind": automation_kinds[index - 1],
+            }
+        )
+        if case_status != "not_executed":
+            executions.append(
+                {
+                    "case_id": case_id,
+                    "run_id": f"FIXTURE-RUN-{index}",
+                    "execution_status": case_status,
+                    "executed_at": r3_time(),
+                    "candidate_ref": "FIXTURE-CANDIDATE-1",
+                }
+            )
+    return {
+        "requirements": [
+            {
+                "quality_requirement_id": "FIXTURE-QUALITY-1",
+                "status": "executing",
+                "candidate_status": "fixed",
+            }
+        ],
+        "formal_cases": cases,
+        "case_executions": executions,
+        "automation_runs": [],
+        "defects": [
+            {
+                "defect_id": f"FIXTURE-DEFECT-{index}",
+                "status": status,
+                "severity": "medium",
+            }
+            for index, status in enumerate(defect_statuses, 1)
+        ],
+        "final_reports": [],
+    }
+
+
+def state_driven_project_status(*delivery_lines: dict, quality: dict | None = None) -> dict:
+    """Minimal shared source for lightweight API and browser fixture tests."""
+    project = minimal_project_status(
+        project_name="Synthetic dashboard project",
+        last_updated=r3_time(),
+        delivery_lines=list(delivery_lines),
+    )
+    project.update(
+        {
+            "overall_status": "in_progress",
+            "roles": {
+                role: {
+                    "name": f"Synthetic {role}",
+                    "status": "in_progress",
+                    "current": "Synthetic current work",
+                    "next": "Synthetic next action",
+                    "waiting_for": "Synthetic dependency",
+                }
+                for role in ("frontend", "development", "testing")
+            },
+        }
+    )
+    if quality is not None:
+        project["quality_workspace_r4"] = quality
+    return project
+
+
 def write_valid_run(
     root: Path,
     run_id: str = "RUN-P1-20260809-000001",
@@ -107,7 +261,7 @@ _BEIJING = timezone(timedelta(hours=8))
 
 def r3_time(hours_ago: float = 0.0) -> str:
     """Return a tz-aware ISO 8601 timestamp, optionally in the past."""
-    moment = datetime.now(timezone.utc) - timedelta(hours=hours_ago)
+    moment = datetime.now(UTC) - timedelta(hours=hours_ago)
     return moment.astimezone(_BEIJING).isoformat(timespec="seconds")
 
 

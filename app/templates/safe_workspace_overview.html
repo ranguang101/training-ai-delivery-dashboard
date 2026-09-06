@@ -7,7 +7,7 @@
     <title>协作总览 | 项目交付看板</title>
     <link rel="stylesheet" href="{{ url_for('static', path='/project-status.css') }}?v=r3-lite-v1">
   </head>
-  <body data-dashboard-mode="read_only_local">
+  <body data-dashboard-mode="read_only_local" data-dashboard-revision="{{ initial_revision or '' }}">
     <header class="topbar">
       <div>
         <h1>项目交付看板</h1>

@@ -16,6 +16,7 @@ project_status.py 的 delivery_lines 兼容逻辑相互独立。所有输出字�
 from __future__ import annotations
 
 import json
+import os
 import re
 from copy import deepcopy
 from datetime import UTC, datetime, timedelta
@@ -23,7 +24,9 @@ from pathlib import Path
 from typing import Any
 
 from app.core.config import PROJECT_ROOT
+from app.services.dashboard_contract import DELIVERY_STATUS_LABELS
 from app.services.document_catalog import build_document_catalog
+from app.services.project_status_cache import load_project_status
 
 
 def _is_valid_test_run(payload: Any) -> bool:
@@ -59,9 +62,10 @@ def _is_valid_test_run(payload: Any) -> bool:
         counts.get("failed"),
         counts.get("blocked"),
     )
-    if all(isinstance(value, int) for value in (executed, passed, failed, blocked)):
-        if executed != passed + failed + blocked:
-            return False
+    if all(isinstance(value, int) for value in (executed, passed, failed, blocked)) and (
+        executed != passed + failed + blocked
+    ):
+        return False
     results = payload.get("case_results")
     return isinstance(results, list) and all(
         isinstance(item, dict)
@@ -89,17 +93,7 @@ R3_SECTION_KEYS = frozenset(
     }
 )
 
-DELIVERY_LINE_STATUS_VALUES = frozenset(
-    {
-        "planning",
-        "contract_freeze",
-        "implementation",
-        "integration",
-        "independent_test",
-        "product_acceptance",
-        "ready_for_trial",
-    }
-)
+DELIVERY_LINE_STATUS_VALUES = frozenset(DELIVERY_STATUS_LABELS)
 FACT_TYPE_VALUES = frozenset(
     {"completed", "in_progress", "next_action", "blocked", "candidate"}
 )
@@ -154,6 +148,19 @@ R3_TEST_FIXTURE_VALUES = frozenset(
 )
 
 STALE_AFTER = timedelta(hours=72)
+
+
+def _utc_now() -> datetime:
+    """Use an optional test clock while keeping production behavior wall-clock based."""
+    test_now = os.environ.get("DASHBOARD_TEST_NOW")
+    if test_now:
+        try:
+            parsed = datetime.fromisoformat(test_now)
+            if parsed.tzinfo is not None:
+                return parsed.astimezone(UTC)
+        except ValueError:
+            pass
+    return datetime.now(UTC)
 
 SAFE_REFERENCE_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$")
 
@@ -222,15 +229,6 @@ WORKSPACE_LABELS = {
     "development": "服务端工作区",
     "frontend": "前端工作区",
     "testing": "质量工作区",
-}
-DELIVERY_STATUS_LABELS = {
-    "planning": "规划中",
-    "contract_freeze": "契约待冻结",
-    "implementation": "实施中",
-    "integration": "联调中",
-    "independent_test": "独立测试中",
-    "product_acceptance": "产品验收中",
-    "ready_for_trial": "可试用",
 }
 CANDIDATE_STATUS_LABELS = {
     "pending": "候选信息待补齐",
@@ -311,7 +309,7 @@ def _verified_at_stale(value: Any) -> bool | None:
     parsed = _parse_verified_at(value)
     if parsed is None:
         return None
-    now = datetime.now(UTC)
+    now = _utc_now()
     if parsed > now:
         return None
     return now - parsed > STALE_AFTER
@@ -320,7 +318,7 @@ def _verified_at_stale(value: Any) -> bool | None:
 def _verified_at_is_future(value: Any) -> bool:
     """未来核对时间不可作为已核对证据或交付结论的依据。"""
     parsed = _parse_verified_at(value)
-    return parsed is not None and parsed > datetime.now(UTC)
+    return parsed is not None and parsed > _utc_now()
 
 
 def _safe_verified_at(value: Any) -> str | None:
@@ -411,9 +409,7 @@ def _case_design_asset_resolves(task_id: str, project_root: Path) -> bool:
 
 def _technical_review_asset_resolves(review_id: str, project_root: Path) -> bool:
     try:
-        payload = json.loads(
-            (project_root / "project-status.json").read_text(encoding="utf-8")
-        )
+        payload = load_project_status(project_root).payload
     except (OSError, json.JSONDecodeError, UnicodeDecodeError):
         return False
     if not isinstance(payload, dict):
@@ -431,9 +427,7 @@ def _technical_review_asset_resolves(review_id: str, project_root: Path) -> bool
 
 def _stage_asset_resolves(stage_code: str, project_root: Path) -> bool:
     try:
-        payload = json.loads(
-            (project_root / "project-status.json").read_text(encoding="utf-8")
-        )
+        payload = load_project_status(project_root).payload
     except (OSError, json.JSONDecodeError, UnicodeDecodeError):
         return False
     if not isinstance(payload, dict):
@@ -473,9 +467,8 @@ def _warning(code: str) -> dict[str, str]:
 
 
 def _load_r3_section(project_root: Path) -> dict[str, Any]:
-    status_path = project_root / "project-status.json"
     try:
-        payload = json.loads(status_path.read_text(encoding="utf-8"))
+        payload = load_project_status(project_root).payload
     except (OSError, json.JSONDecodeError, UnicodeDecodeError) as exc:
         raise _R3LoadError("project-status.json cannot be loaded") from exc
     if not isinstance(payload, dict):
@@ -1130,7 +1123,7 @@ def _project_evidence(
         }
     safe_verified_at = _safe_verified_at(target["verified_at"])
     safe_status = target["status"]
-    if safe_verified_at is None:
+    if target["status"] == "missing" or safe_verified_at is None:
         safe_status = "missing"
     elif _verified_at_stale(target["verified_at"]):
         safe_status = "stale"
@@ -1294,7 +1287,7 @@ def load_r3_evidence_detail(
     )
     safe_verified_at = _safe_verified_at(target["verified_at"])
     safe_status = target["status"]
-    if safe_verified_at is None:
+    if target["status"] == "missing" or safe_verified_at is None:
         safe_status = "missing"
     elif _verified_at_stale(target["verified_at"]):
         safe_status = "stale"

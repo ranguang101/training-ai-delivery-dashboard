@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light">
+    <title>{{ page_label }} | 项目交付看板</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='/project-status.css') }}?v=lightweight-v2">
+  </head>
+  <body
+    class="lightweight-body"
+    data-dashboard-mode="read_only_local"
+    data-dashboard-revision="{{ initial_revision or '' }}"
+    data-dashboard-page="{{ page }}"
+    data-dashboard-line="{{ line_id }}"
+  >
+    <div class="lightweight-app">
+      <aside class="lightweight-rail">
+        <a class="lightweight-brand" href="/project-status">
+          <span class="lightweight-brand-mark" aria-hidden="true">交付</span>
+          <span>
+            <strong>项目交付看板</strong>
+            <small>LOCAL CONTROL ROOM</small>
+          </span>
+        </a>
+
+        <p class="lightweight-nav-title">五个一级页面</p>
+          <nav class="lightweight-nav" aria-label="项目一级导航">
+          <a class="{% if page == 'overview' %}is-active{% endif %}" data-lightweight-nav href="/project-status">
+            <span class="lightweight-nav-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+            </span>
+            项目总览
+          </a>
+          <a class="{% if page == 'product' %}is-active{% endif %}" data-lightweight-nav href="/project-status/product">
+            <span class="lightweight-nav-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"/><path d="M8 4v13a3 3 0 0 0 3 3M9 8h6M9 12h6"/></svg>
+            </span>
+            产品 / PRD
+          </a>
+          <a class="{% if page == 'frontend' %}is-active{% endif %}" data-lightweight-nav href="/project-status/frontend">
+            <span class="lightweight-nav-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M8 21h8M12 18v3M7 9l3 2-3 2M14 13h3"/></svg>
+            </span>
+            前端交付
+          </a>
+          <a class="{% if page == 'development' %}is-active{% endif %}" data-lightweight-nav href="/project-status/development">
+            <span class="lightweight-nav-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="7" ry="3"/><path d="M5 5v7c0 1.7 3.1 3 7 3s7-1.3 7-3V5M5 12v7c0 1.7 3.1 3 7 3s7-1.3 7-3v-7"/></svg>
+            </span>
+            服务端交付
+          </a>
+          <a class="{% if page == 'testing' %}is-active{% endif %}" data-lightweight-nav href="/project-status/tests">
+            <span class="lightweight-nav-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M5 4h14v16H5z"/><path d="M8 8h8M8 12h4M8 16h5"/><path d="m15 14 2 2 3-4"/></svg>
+            </span>
+            质量 / 测试
+          </a>
+        </nav>
+
+        <div class="lightweight-rail-note">
+          <strong>一版可讨论看板</strong>
+          <span>数据来自项目状态文件。这里用于观察交付节奏，不提供业务操作、审批或发布。</span>
+        </div>
+      </aside>
+
+      <div class="lightweight-content">
+        <header class="lightweight-topbar">
+          <div class="lightweight-crumb">
+            <span id="lightweight-project-crumb">项目名称待关联</span>
+            <span aria-hidden="true">/</span>
+            <strong>{{ page_label }}</strong>
+          </div>
+          <div class="lightweight-context">
+            <span class="lightweight-source-tag">本地状态源</span>
+            <span class="lightweight-sync"><i aria-hidden="true"></i><span id="sync-status">自动同步中</span></span>
+          </div>
+        </header>
+
+        <main class="lightweight-main">
+          <div data-lightweight-dashboard aria-live="polite" aria-busy="true">
+            <p class="safe-workspace-loading">正在加载项目状态…</p>
+          </div>
+        </main>
+
+        <footer class="lightweight-footer">
+          <span>本地只读监控面板 · 修改 project-status.json 后自动同步。</span>
+          <span>不替代产品验收、独立测试、试用或发布结论。</span>
+        </footer>
+      </div>
+    </div>
+
+    <div class="lightweight-drawer-backdrop" data-lightweight-drawer-backdrop hidden>
+      <aside class="lightweight-drawer" role="dialog" aria-modal="true" aria-labelledby="lightweight-drawer-title">
+        <button class="lightweight-drawer-close" type="button" data-lightweight-drawer-close aria-label="关闭详情">×</button>
+        <h2 id="lightweight-drawer-title">信息详情</h2>
+        <p class="lightweight-drawer-sub" id="lightweight-drawer-sub">受控摘要</p>
+        <div id="lightweight-drawer-body"></div>
+      </aside>
+    </div>
+
+    <script src="{{ url_for('static', path='/dashboard-shell.js') }}?v=r3-lite-v2" defer></script>
+    <script src="{{ url_for('static', path='/lightweight-dashboard.js') }}?v=lightweight-v2" defer></script>
+  </body>
+</html>

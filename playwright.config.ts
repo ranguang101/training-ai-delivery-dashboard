@@ -11,8 +11,11 @@ export default defineConfig({
     screenshot: 'only-on-failure',
   },
   webServer: {
-    command: `.\\.venv\\Scripts\\python.exe -m tools.project_dashboard.run --host 127.0.0.1 --port ${testPort}`,
+    command: `.\\.venv\\Scripts\\python.exe -m tools.project_dashboard.run --host 127.0.0.1 --port ${testPort} --project-root .\\fixtures\\demo-project`,
     url: `${testBaseURL}/api/v1/project-status/dashboard/r3/workspaces/collaboration`,
+    env: {
+      DASHBOARD_TEST_NOW: '2026-08-24T00:00:00+00:00',
+    },
     reuseExistingServer: !process.env.CI,
   },
 });

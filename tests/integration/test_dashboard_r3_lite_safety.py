@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Callable
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Callable
 
+import pytest
 from fastapi.testclient import TestClient
 
 from tests.integration._dashboard_fixtures import (
@@ -21,6 +23,20 @@ from tools.project_dashboard.main import create_dashboard_app
 
 WORKSPACE_URL = "/api/v1/project-status/dashboard/r3/workspaces/development"
 EVIDENCE_URL = "/api/v1/project-status/dashboard/r3/evidence"
+
+
+@pytest.fixture(autouse=True)
+def freeze_r3_clock(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Keep the date-sensitive demo fixture deterministic across calendar days."""
+
+    class FrozenDateTime(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            current = datetime(2026, 8, 24, 0, 0, tzinfo=UTC)
+            return current.astimezone(tz) if tz else current.replace(tzinfo=None)
+
+    monkeypatch.setattr("app.services.delivery_monitor.datetime", FrozenDateTime)
+    monkeypatch.setattr("tests.integration._dashboard_fixtures.datetime", FrozenDateTime)
 
 
 def _client(
@@ -314,7 +330,8 @@ def test_old_raw_apis_still_closed_in_panel_mode(tmp_path) -> None:
         assert client.get("/project-status/documents").status_code == 404
         assert client.get("/api/v1/project-status/tests").status_code == 404
         sync = client.get("/api/v1/project-status").json()["data"]
-        assert set(sync) == {"project_name", "last_updated"}
+        assert set(sync) == {"project_name", "last_updated", "revision"}
+        assert sync["revision"]
 
 
 def test_legacy_dashboard_endpoint_is_removed_from_r3(tmp_path) -> None:

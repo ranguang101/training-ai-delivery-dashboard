@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import ipaddress
+import os
 from pathlib import Path
 
 import uvicorn
@@ -20,6 +21,9 @@ R3_TEST_FIXTURE_CHOICES = (
 R3_TEST_FAULT_CHOICES = ("r3-workspace-503",)
 
 LOOPBACK_NAMES = frozenset({"127.0.0.1", "localhost", "::1"})
+LIVE_PROJECT_ROOT = Path(
+    os.environ.get("DASHBOARD_PROJECT_ROOT", r"D:\培训机构AI提效项目")
+)
 
 
 def resolve_loopback_host(host: str) -> str:
@@ -49,7 +53,7 @@ def main() -> None:
     parser.add_argument(
         "--project-root",
         type=Path,
-        default=DEFAULT_DASHBOARD_DATA_ROOT,
+        default=None,
         help="Read-only project-status fixture or project root to display",
     )
     parser.add_argument(
@@ -69,7 +73,8 @@ def main() -> None:
         parser.error(str(exc))
     uvicorn.run(
         create_dashboard_app(
-            args.project_root,
+            args.project_root
+            or (LIVE_PROJECT_ROOT if LIVE_PROJECT_ROOT.exists() else DEFAULT_DASHBOARD_DATA_ROOT),
             r3_test_fixture=args.r3_test_fixture,
             test_fault=args.test_fault,
         ),

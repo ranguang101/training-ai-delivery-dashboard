@@ -1,10 +1,26 @@
 """Standalone R3 startup and loopback boundary checks."""
 
+import json
+from datetime import UTC, datetime
+
 import pytest
 from fastapi.testclient import TestClient
 
 from tools.project_dashboard.main import create_dashboard_app
 from tools.project_dashboard.run import resolve_loopback_host
+
+
+@pytest.fixture(autouse=True)
+def freeze_r3_clock(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Keep the date-sensitive demo fixtures deterministic across calendar days."""
+
+    class FrozenDateTime(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            current = datetime(2026, 8, 24, 0, 0, tzinfo=UTC)
+            return current.astimezone(tz) if tz else current.replace(tzinfo=None)
+
+    monkeypatch.setattr("app.services.delivery_monitor.datetime", FrozenDateTime)
 
 
 def test_default_demo_starts_with_r3_safe_projection_only() -> None:
@@ -22,11 +38,42 @@ def test_default_demo_starts_with_r3_safe_projection_only() -> None:
 
         sync = client.get("/api/v1/project-status")
         assert sync.status_code == 200
-        assert set(sync.json()["data"]) == {"project_name", "last_updated"}
+        assert set(sync.json()["data"]) == {"project_name", "last_updated", "revision"}
+        assert sync.json()["data"]["revision"]
 
         # R2 raw-data and auxiliary-operation surfaces are not part of R3.
         assert client.get("/api/v1/project-status/dashboard").status_code == 404
         assert client.get("/project-status/tests/automation").status_code == 404
+
+
+def test_project_status_revision_refreshes_cached_snapshot(tmp_path) -> None:
+    root = tmp_path / "project"
+    root.mkdir()
+    status_path = root / "project-status.json"
+    status_path.write_text(
+        json.dumps({"project_name": "初始项目", "last_updated": "2026-08-25T10:00:00+08:00"}),
+        encoding="utf-8",
+    )
+
+    with TestClient(create_dashboard_app(root)) as client:
+        first = client.get("/api/v1/project-status").json()["data"]
+        page = client.get("/project-status/workspaces")
+        assert page.status_code == 200
+        assert f'data-dashboard-revision="{first["revision"]}"' in page.text
+
+        status_path.write_text(
+            json.dumps(
+                {
+                    "project_name": "更新后的项目",
+                    "last_updated": "2026-08-25T10:01:00+08:00",
+                }
+            ),
+            encoding="utf-8",
+        )
+        second = client.get("/api/v1/project-status").json()["data"]
+
+    assert second["project_name"] == "更新后的项目"
+    assert second["revision"] != first["revision"]
 
 
 def _workspace(client: TestClient, workspace: str, line: str) -> dict:

@@ -16,6 +16,42 @@ from pathlib import Path
 from typing import Any
 
 from app.core.config import PROJECT_ROOT
+from app.services.dashboard_contract import (
+    AUTOMATION_STATUS_LABELS as AUTOMATION_LABELS,
+)
+from app.services.dashboard_contract import (
+    AUTOMATION_STATUS_VALUES,
+    DEFECT_STATUS_LABELS,
+    DEFECT_STATUS_VALUES,
+)
+from app.services.dashboard_contract import (
+    QUALITY_CANDIDATE_STATUS_VALUES as CANDIDATE_STATUS_VALUES,
+)
+from app.services.dashboard_contract import (
+    QUALITY_REQUIREMENT_STATUS_LABELS as REQUIREMENT_LABELS,
+)
+from app.services.dashboard_contract import (
+    QUALITY_REQUIREMENT_STATUS_VALUES as REQUIREMENT_STATUS_VALUES,
+)
+from app.services.dashboard_contract import (
+    TEST_CASE_STATUS_LABELS as CASE_STATUS_LABELS,
+)
+from app.services.dashboard_contract import (
+    TEST_CASE_STATUS_VALUES as CASE_STATUS_VALUES,
+)
+from app.services.dashboard_contract import (
+    TEST_REPORT_STATUS_LABELS as REPORT_STATUS_LABELS,
+)
+from app.services.dashboard_contract import (
+    TEST_REPORT_STATUS_VALUES as REPORT_STATUS_VALUES,
+)
+from app.services.dashboard_contract import (
+    TEST_RUN_STATUS_LABELS as EXECUTION_LABELS,
+)
+from app.services.dashboard_contract import (
+    TEST_RUN_STATUS_VALUES as EXECUTION_STATUS_VALUES,
+)
+from app.services.project_status_cache import load_project_status
 
 SECTION_KEY = "quality_workspace_r4"
 REQUIREMENT_IDS = (
@@ -23,93 +59,12 @@ REQUIREMENT_IDS = (
     "QR-MVP-B-MANUAL",
     "QR-MVP-B-TEXT-AI",
 )
-REQUIREMENT_STATUS_VALUES = frozenset(
-    {
-        "not_started",
-        "designing",
-        "executing",
-        "blocked",
-        "report_pending",
-        "ready_for_product_acceptance",
-        "archived",
-    }
-)
-EXECUTION_STATUS_VALUES = frozenset(
-    {"not_executed", "passed", "failed", "blocked", "not_applicable"}
-)
-AUTOMATION_STATUS_VALUES = frozenset(
-    {
-        "not_configured",
-        "planned",
-        "running",
-        "passed_pending_human",
-        "failed",
-        "reviewed",
-    }
-)
-DEFECT_STATUS_VALUES = frozenset(
-    {
-        "open",
-        "confirmed",
-        "in_progress",
-        "ready_for_retest",
-        "retest_partial",
-        "retest_failed",
-        "closed",
-        "retest_passed",
-    }
-)
 SEVERITY_VALUES = frozenset({"blocker", "critical", "high", "medium", "low"})
-REPORT_STATUS_VALUES = frozenset({"not_available", "draft", "passed", "failed", "blocked"})
-CANDIDATE_STATUS_VALUES = frozenset({"pending", "fixed", "inconsistent"})
 CASE_TYPE_VALUES = frozenset({"functional", "regression", "manual", "integration"})
 AUTOMATION_KIND_VALUES = frozenset({"manual", "automated", "hybrid"})
 
-_REFERENCE_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$")
+_REFERENCE_PATTERN = re.compile(r"^[^\W_][\w.:—-]{0,127}$")
 _STALE_AFTER = timedelta(hours=72)
-
-REQUIREMENT_LABELS = {
-    "not_started": "未开始",
-    "designing": "测试设计中",
-    "executing": "测试执行中",
-    "blocked": "测试受阻",
-    "report_pending": "待出具测试报告",
-    "ready_for_product_acceptance": "可进入产品验收",
-    "archived": "已归档",
-}
-EXECUTION_LABELS = {
-    "not_executed": "未执行",
-    "passed": "通过",
-    "failed": "失败",
-    "blocked": "阻塞",
-    "not_applicable": "不适用",
-}
-AUTOMATION_LABELS = {
-    "not_configured": "未配置",
-    "planned": "待运行",
-    "running": "运行中",
-    "passed_pending_human": "辅助通过，待人工确认",
-    "failed": "辅助运行失败",
-    "reviewed": "已人工确认（辅助证据）",
-}
-DEFECT_STATUS_LABELS = {
-    "open": "Open",
-    "confirmed": "Open",
-    "in_progress": "修复中",
-    "ready_for_retest": "待复测",
-    "retest_partial": "待复测",
-    "retest_failed": "Open",
-    "closed": "已关闭",
-    "retest_passed": "已关闭",
-}
-REPORT_STATUS_LABELS = {
-    "not_available": "尚未形成",
-    "draft": "草稿",
-    "passed": "通过",
-    "failed": "失败",
-    "blocked": "阻塞",
-}
-
 
 class QualityLifecycleNotFound(KeyError):
     """请求了未注册的质量需求。"""
@@ -159,7 +114,7 @@ def _stale(value: Any) -> bool:
 
 def _read_section(project_root: Path) -> tuple[dict[str, Any] | None, list[dict[str, str]]]:
     try:
-        payload = json.loads((project_root / "project-status.json").read_text(encoding="utf-8"))
+        payload = load_project_status(project_root).payload
     except (OSError, UnicodeDecodeError, json.JSONDecodeError):
         return None, [_warning("QW_DATA_UNAVAILABLE", "暂时无法加载质量追踪信息，请稍后重试")]
     if not isinstance(payload, dict):
@@ -227,6 +182,9 @@ def _case(item: dict[str, Any]) -> dict[str, Any]:
     automation_kind = _string(item.get("automation_kind"), maximum=32)
     if case_type not in CASE_TYPE_VALUES or automation_kind not in AUTOMATION_KIND_VALUES:
         raise ValueError("invalid case category")
+    case_status = _string(item.get("case_status", "passed"), maximum=32)
+    if case_status not in CASE_STATUS_VALUES:
+        raise ValueError("invalid case status")
     return {
         "case_id": _reference(item.get("case_id")),
         "quality_requirement_id": _reference(item.get("quality_requirement_id")),
@@ -238,6 +196,13 @@ def _case(item: dict[str, Any]) -> dict[str, Any]:
         "preconditions": _string(item.get("preconditions", "未提供"), maximum=500),
         "steps": _string(item.get("steps", "未提供"), maximum=800),
         "expected_result": _string(item.get("expected_result", "未提供"), maximum=800),
+        "case_status": case_status,
+        "case_status_label": CASE_STATUS_LABELS[case_status],
+        "review_status": _string(item.get("review_status", "reviewed"), maximum=32),
+        "actual_result": _string(item.get("actual_result", "未提供"), maximum=800),
+        "evidence_summary": _string(item.get("evidence_summary", "未提供"), maximum=300),
+        "next_action": _string(item.get("next_action", "无需补充"), maximum=500),
+        "source_ref": _reference(item.get("source_ref", "PROJECT_STATUS")),
     }
 
 
@@ -259,12 +224,16 @@ def _automation(item: dict[str, Any]) -> dict[str, Any]:
     if status not in AUTOMATION_STATUS_VALUES:
         raise ValueError("invalid automation status")
     total, failed = item.get("assertion_total", 0), item.get("assertion_failed", 0)
+    run_count = item.get("run_count", 1)
     if (
         any(
             isinstance(value, bool) or not isinstance(value, int) or value < 0
             for value in (total, failed)
         )
         or failed > total
+        or isinstance(run_count, bool)
+        or not isinstance(run_count, int)
+        or run_count < 1
     ):
         raise ValueError("invalid assertion counts")
     return {
@@ -275,6 +244,7 @@ def _automation(item: dict[str, Any]) -> dict[str, Any]:
         "automation_status": status,
         "assertion_total": total,
         "assertion_failed": failed,
+        "run_count": run_count,
         "screenshot_registered": item.get("screenshot_registered") is True,
         "log_summary_registered": item.get("log_summary_registered") is True,
         "executed_at": _safe_timestamp(item.get("executed_at")),
@@ -388,14 +358,21 @@ def _execution_for(
 def _case_card(cases: list[dict[str, Any]], executions: list[dict[str, Any]]) -> dict[str, Any]:
     latest = _execution_for(cases, executions)
     counts = Counter(item["execution_status"] for item in latest.values())
-    counts["not_executed"] += len(cases) - len(latest)
+    case_statuses = Counter(item["case_status"] for item in cases)
     return {
         "total": len(cases),
         "executed": sum(counts[key] for key in ("passed", "failed", "blocked")),
-        "not_executed": counts["not_executed"],
+        "with_evidence": sum(
+            case_statuses[key] for key in ("passed", "failed", "blocked", "pending_review")
+        ),
+        "not_executed": case_statuses["not_executed"],
         "passed": counts["passed"],
         "failed": counts["failed"],
         "blocked": counts["blocked"],
+        "formal_passed": case_statuses["passed"],
+        "formal_failed": case_statuses["failed"],
+        "formal_blocked": case_statuses["blocked"],
+        "pending_review": case_statuses["pending_review"],
         "automated": sum(item["automation_kind"] == "automated" for item in cases),
         "manual": sum(item["automation_kind"] != "automated" for item in cases),
         "latest_execution_status": next(
@@ -408,7 +385,7 @@ def _automation_card(items: list[dict[str, Any]]) -> dict[str, Any]:
     counts = Counter(item["automation_status"] for item in items)
     latest = max(items, key=lambda item: item["executed_at"] or "", default=None)
     return {
-        "automatable_count": len(items),
+        "automatable_count": sum(item.get("run_count", 1) for item in items),
         "latest_run_id": latest["automation_run_id"] if latest else None,
         "latest_status": latest["automation_status"] if latest else "not_configured",
         "passed_pending_human": counts["passed_pending_human"],
@@ -709,10 +686,15 @@ def _empty_cards() -> dict[str, Any]:
         "formal_cases": {
             "total": 0,
             "executed": 0,
+            "with_evidence": 0,
             "not_executed": 0,
             "passed": 0,
             "failed": 0,
             "blocked": 0,
+            "formal_passed": 0,
+            "formal_failed": 0,
+            "formal_blocked": 0,
+            "pending_review": 0,
             "automated": 0,
             "manual": 0,
             "latest_execution_status": "not_executed",

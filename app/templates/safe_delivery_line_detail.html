@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light">
+    <title>交付线通用详情 | 项目交付看板</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='/project-status.css') }}?v=delivery-detail-v1">
+  </head>
+  <body
+    data-dashboard-mode="read_only_local"
+    data-dashboard-revision="{{ initial_revision or '' }}"
+    data-delivery-line-id="{{ delivery_line_id }}"
+  >
+    <header class="topbar">
+      <div><h1>项目交付看板</h1></div>
+      <div class="topbar-actions">
+        {% include "_project_nav.html" %}
+        <div class="sync-panel" aria-live="polite">
+          <span class="sync-dot"></span>
+          <div><strong id="sync-status">自动同步中</strong><span>仅显示安全摘要</span></div>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="safe-workspace-hero delivery-detail-hero" aria-labelledby="delivery-detail-title">
+        <div>
+          <p class="safe-workspace-back"><a href="/project-status?line={{ delivery_line_id }}">返回项目总览</a></p>
+          <h2 id="delivery-detail-title">交付线通用详情</h2>
+          <p>按明确关系查看需求版本、技术方案、候选交接、质量追踪和受控证据。未关联、冲突或过期信息会明确标记。</p>
+        </div>
+      </section>
+
+      <section class="section-block delivery-detail-section" aria-labelledby="delivery-detail-content-title">
+        <div class="section-heading">
+          <div><h2 id="delivery-detail-content-title">详情与证据追踪</h2></div>
+          <p>本页面只读，不提供需求编辑、测试执行、缺陷关闭、报告签发或发布操作。</p>
+        </div>
+        <div data-delivery-detail aria-live="polite" aria-busy="true">
+          <p class="safe-workspace-loading">正在加载交付线详情…</p>
+        </div>
+      </section>
+    </main>
+
+    <footer><span>仅显示经服务端安全投影批准的交付线信息。</span></footer>
+    <script src="{{ url_for('static', path='/dashboard-shell.js') }}?v=r3-lite-v2" defer></script>
+    <script src="{{ url_for('static', path='/delivery-line-detail.js') }}?v=delivery-detail-v1" defer></script>
+  </body>
+</html>

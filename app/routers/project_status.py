@@ -8,19 +8,25 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from urllib.parse import urlencode
 
 from fastapi import APIRouter, HTTPException, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
 from app.core.config import PROJECT_ROOT, get_settings
+from app.services.delivery_detail import (
+    DeliveryDetailNotFound,
+    build_delivery_line_detail,
+    build_delivery_line_evidence_detail,
+)
 from app.services.delivery_monitor import (
     R3_TEST_FIXTURE_VALUES,
     WORKSPACE_ID_VALUES,
     build_r3_workspace_view,
     load_r3_evidence_detail,
 )
+from app.services.lightweight_dashboard import PAGE_LABELS, build_lightweight_dashboard
+from app.services.project_status_cache import load_project_status, project_status_revision
 from app.services.quality_lifecycle import (
     QualityLifecycleNotFound,
     build_quality_requirement_detail,
@@ -62,10 +68,12 @@ def _r3_test_fixture(request: Request) -> str | None:
 def _sync_projection(project_root: Path) -> dict[str, str | None]:
     """The polling endpoint deliberately exposes only the display-safe clock."""
     try:
-        source = (project_root / "project-status.json").read_text(encoding="utf-8")
-        payload = json.loads(source)
+        snapshot = load_project_status(project_root)
+        payload = snapshot.payload
+        revision = snapshot.revision
     except (OSError, json.JSONDecodeError, UnicodeDecodeError):
         payload = {}
+        revision = project_status_revision(project_root)
     if not isinstance(payload, dict):
         payload = {}
     project_name = payload.get("project_name")
@@ -73,10 +81,12 @@ def _sync_projection(project_root: Path) -> dict[str, str | None]:
     return {
         "project_name": project_name if isinstance(project_name, str) else None,
         "last_updated": last_updated if isinstance(last_updated, str) else None,
+        "revision": revision,
     }
 
 
 def _render_workspace(request: Request, workspace_id: str) -> HTMLResponse:
+    sync = _sync_projection(_project_root(request))
     return _templates_for(request).TemplateResponse(
         request,
         "safe_workspace_overview.html"
@@ -85,6 +95,34 @@ def _render_workspace(request: Request, workspace_id: str) -> HTMLResponse:
         {
             "workspace_id": workspace_id,
             "workspace_label": WORKSPACE_LABELS[workspace_id],
+            "initial_revision": sync["revision"],
+        },
+    )
+
+
+def _render_lightweight_page(
+    request: Request, page: str, *, line_id: str | None = None
+) -> HTMLResponse:
+    line_id = line_id or None
+    try:
+        sync = _sync_projection(_project_root(request))
+        selected_line = None
+        if line_id is not None:
+            selected_line = build_lightweight_dashboard(
+                page=page, line_id=line_id, project_root=_project_root(request)
+            ).get("selected_line")
+            if selected_line is None:
+                raise KeyError(line_id)
+    except (KeyError, TypeError, ValueError) as exc:
+        raise HTTPException(status_code=404, detail="DASHBOARD_LINE_NOT_FOUND") from exc
+    return _templates_for(request).TemplateResponse(
+        request,
+        "safe_dashboard_page.html",
+        {
+            "page": page,
+            "page_label": PAGE_LABELS[page],
+            "line_id": line_id or "",
+            "initial_revision": sync["revision"],
         },
     )
 
@@ -133,6 +171,43 @@ def r3_evidence_data(evidence_type: str, evidence_id: str, request: Request) -> 
 
 
 @router.get(
+    "/api/v1/project-status/delivery-lines/{delivery_line_id}/detail",
+    include_in_schema=False,
+)
+def delivery_line_detail_data(delivery_line_id: str, request: Request) -> dict:
+    """L2 generic delivery-line detail; all relations are server-side scoped."""
+    _ensure_enabled()
+    try:
+        data = build_delivery_line_detail(
+            delivery_line_id, project_root=_project_root(request)
+        )
+    except (DeliveryDetailNotFound, TypeError, ValueError) as exc:
+        raise HTTPException(status_code=404, detail="DELIVERY_LINE_DETAIL_NOT_FOUND") from exc
+    return {"success": True, "data": data}
+
+
+@router.get(
+    "/api/v1/project-status/delivery-lines/{delivery_line_id}/evidence/{evidence_type}/{evidence_id}",
+    include_in_schema=False,
+)
+def delivery_line_evidence_data(
+    delivery_line_id: str, evidence_type: str, evidence_id: str, request: Request
+) -> dict:
+    """L4 controlled evidence projection; raw evidence remains unavailable."""
+    _ensure_enabled()
+    try:
+        data = build_delivery_line_evidence_detail(
+            delivery_line_id,
+            evidence_type,
+            evidence_id,
+            project_root=_project_root(request),
+        )
+    except (DeliveryDetailNotFound, TypeError, ValueError) as exc:
+        raise HTTPException(status_code=404, detail="DELIVERY_EVIDENCE_NOT_FOUND") from exc
+    return {"success": True, "data": data}
+
+
+@router.get(
     "/api/v1/project-status/quality-requirements",
     include_in_schema=False,
 )
@@ -175,10 +250,14 @@ def quality_requirement_detail(
 def _render_quality_requirements(
     request: Request, *, requirement_id: str | None = None
 ) -> HTMLResponse:
+    sync = _sync_projection(_project_root(request))
     return _templates_for(request).TemplateResponse(
         request,
         "safe_quality_requirements.html",
-        {"quality_requirement_id": requirement_id},
+        {
+            "quality_requirement_id": requirement_id,
+            "initial_revision": sync["revision"],
+        },
     )
 
 
@@ -187,6 +266,12 @@ def _render_quality_requirements(
     response_class=HTMLResponse,
     include_in_schema=False,
 )
+def testing_dashboard_page(request: Request, line: str | None = None) -> HTMLResponse:
+    """Lightweight quality/testing page; the R4 detail remains under /requirements."""
+    _ensure_enabled()
+    return _render_lightweight_page(request, "testing", line_id=line)
+
+
 @router.get(
     "/project-status/tests/requirements",
     response_class=HTMLResponse,
@@ -196,6 +281,72 @@ def quality_requirements_page(request: Request) -> HTMLResponse:
     """R4 quality workspace entry; it only loads the controlled lifecycle API."""
     _ensure_enabled()
     return _render_quality_requirements(request)
+
+
+@router.get("/api/v1/project-status/lightweight", include_in_schema=False)
+def lightweight_dashboard_data(
+    request: Request, page: str = "overview", line: str | None = None
+) -> dict:
+    _ensure_enabled()
+    line = line or None
+    try:
+        data = build_lightweight_dashboard(
+            page=page, line_id=line, project_root=_project_root(request)
+        )
+    except (KeyError, TypeError, ValueError) as exc:
+        raise HTTPException(status_code=404, detail="DASHBOARD_PAGE_NOT_FOUND") from exc
+    return {"success": True, "data": data}
+
+
+@router.get(
+    "/project-status/delivery-lines/{delivery_line_id}/evidence/{evidence_type}/{evidence_id}",
+    response_class=HTMLResponse,
+    include_in_schema=False,
+)
+def delivery_line_evidence_page(
+    delivery_line_id: str, evidence_type: str, evidence_id: str, request: Request
+) -> HTMLResponse:
+    _ensure_enabled()
+    try:
+        detail = build_delivery_line_evidence_detail(
+            delivery_line_id,
+            evidence_type,
+            evidence_id,
+            project_root=_project_root(request),
+        )
+    except (DeliveryDetailNotFound, TypeError, ValueError) as exc:
+        raise HTTPException(status_code=404, detail="DELIVERY_EVIDENCE_NOT_FOUND") from exc
+    return _templates_for(request).TemplateResponse(
+        request,
+        "safe_delivery_evidence.html",
+        {
+            "detail": detail,
+            "delivery_line_id": delivery_line_id,
+            "return_href": f"/project-status/delivery-lines/{delivery_line_id}",
+        },
+    )
+
+
+@router.get(
+    "/project-status/delivery-lines/{delivery_line_id}",
+    response_class=HTMLResponse,
+    include_in_schema=False,
+)
+def delivery_line_detail_page(delivery_line_id: str, request: Request) -> HTMLResponse:
+    _ensure_enabled()
+    try:
+        build_delivery_line_detail(delivery_line_id, project_root=_project_root(request))
+    except (DeliveryDetailNotFound, TypeError, ValueError) as exc:
+        raise HTTPException(status_code=404, detail="DELIVERY_LINE_DETAIL_NOT_FOUND") from exc
+    sync = _sync_projection(_project_root(request))
+    return _templates_for(request).TemplateResponse(
+        request,
+        "safe_delivery_line_detail.html",
+        {
+            "delivery_line_id": delivery_line_id,
+            "initial_revision": sync["revision"],
+        },
+    )
 
 
 @router.get(
@@ -209,11 +360,28 @@ def quality_requirement_detail_page(quality_requirement_id: str, request: Reques
 
 
 @router.get("/project-status", response_class=HTMLResponse, include_in_schema=False)
-def project_status_page(request: Request, line: str | None = None) -> RedirectResponse:
-    """R3 has one safe collaboration overview; retain the historical entry URL."""
+def project_status_page(request: Request, line: str | None = None) -> HTMLResponse:
+    """Lightweight five-page dashboard overview; R3 remains under /workspaces."""
     _ensure_enabled()
-    query = f"?{urlencode({'line': line})}" if line else ""
-    return RedirectResponse(url=f"/project-status/workspaces{query}", status_code=307)
+    return _render_lightweight_page(request, "overview", line_id=line)
+
+
+@router.get("/project-status/product", response_class=HTMLResponse, include_in_schema=False)
+def product_dashboard_page(request: Request, line: str | None = None) -> HTMLResponse:
+    _ensure_enabled()
+    return _render_lightweight_page(request, "product", line_id=line)
+
+
+@router.get("/project-status/frontend", response_class=HTMLResponse, include_in_schema=False)
+def frontend_dashboard_page(request: Request, line: str | None = None) -> HTMLResponse:
+    _ensure_enabled()
+    return _render_lightweight_page(request, "frontend", line_id=line)
+
+
+@router.get("/project-status/development", response_class=HTMLResponse, include_in_schema=False)
+def development_dashboard_page(request: Request, line: str | None = None) -> HTMLResponse:
+    _ensure_enabled()
+    return _render_lightweight_page(request, "development", line_id=line)
 
 
 @router.get(

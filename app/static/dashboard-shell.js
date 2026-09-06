@@ -5,7 +5,7 @@
 
   const syncPanel = document.querySelector('.sync-panel');
   const syncStatus = document.querySelector('#sync-status');
-  const initialLastUpdated = document.body.dataset.lastUpdated || null;
+  const initialRevision = document.body.dataset.dashboardRevision || null;
 
   window.dashboardElement = function dashboardElement(tag, className, text) {
     const element = document.createElement(tag);
@@ -20,13 +20,13 @@
       const response = await fetch('/api/v1/project-status', { cache: 'no-store' });
       if (!response.ok) throw new Error('status request failed');
       const payload = await response.json();
-      const lastUpdated = payload?.data?.last_updated;
-      if (lastUpdated !== null && typeof lastUpdated !== 'string') {
+      const revision = payload?.data?.revision;
+      if (revision !== null && typeof revision !== 'string') {
         throw new Error('sync projection invalid');
       }
       syncPanel.classList.remove('is-error');
       syncStatus.textContent = '已连接';
-      if (initialLastUpdated && lastUpdated && lastUpdated !== initialLastUpdated) {
+      if (initialRevision && revision && revision !== initialRevision) {
         syncStatus.textContent = '发现更新，正在刷新';
         window.location.reload();
       }

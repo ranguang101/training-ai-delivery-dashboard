@@ -4,11 +4,26 @@ from __future__ import annotations
 
 import json
 import shutil
+from datetime import UTC, datetime
 from pathlib import Path
 
+import pytest
 from fastapi.testclient import TestClient
 
 from tools.project_dashboard.main import DEFAULT_DASHBOARD_DATA_ROOT, create_dashboard_app
+
+
+@pytest.fixture(autouse=True)
+def freeze_quality_clock(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Keep the 72-hour demo data checks deterministic across calendar days."""
+
+    class FrozenDateTime(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            current = datetime(2026, 8, 24, 0, 0, tzinfo=UTC)
+            return current.astimezone(tz) if tz else current.replace(tzinfo=None)
+
+    monkeypatch.setattr("app.services.quality_lifecycle.datetime", FrozenDateTime)
 
 
 def _root(tmp_path: Path) -> Path:
@@ -116,6 +131,52 @@ def test_auxiliary_automation_never_supplies_formal_case_or_readiness(tmp_path) 
         assert data["cards"]["assisted_automation"]["passed_pending_human"] == 1
         assert data["selected_requirement"]["can_enter_product_acceptance"] is False
         assert any(item["code"] == "QW_NO_FORMAL_CASES" for item in data["warnings"])
+
+
+def test_case_statuses_are_separate_from_auxiliary_execution_status(tmp_path) -> None:
+    root = _root(tmp_path)
+    payload = _payload(root)
+    section = payload["quality_workspace_r4"]
+    section["formal_cases"] = [
+        {
+            "case_id": "MVP-A-CASE-001",
+            "quality_requirement_id": "QR-MVP-A",
+            "requirement_ids": ["MVP-A-AC-001—007"],
+            "feature_ids": ["P1"],
+            "title": "受控 Case",
+            "case_type": "functional",
+            "automation_kind": "hybrid",
+            "preconditions": "normal",
+            "steps": "执行主链",
+            "expected_result": "结果可追溯",
+            "case_status": "pending_review",
+            "review_status": "case_review_pending",
+            "actual_result": "辅助执行通过，人工待确认",
+            "evidence_summary": "已登记辅助执行证据",
+            "next_action": "补人工确认",
+            "source_ref": "TEST-ASSET-001",
+        }
+    ]
+    section["case_executions"] = [
+        {
+            "case_id": "MVP-A-CASE-001",
+            "run_id": "RUN-CASE-001",
+            "execution_status": "passed",
+            "executed_at": "2026-08-23T00:00:00+00:00",
+            "candidate_ref": "CANDIDATE-001",
+        }
+    ]
+    _write(root, payload)
+    with _client(root) as client:
+        data = client.get(
+            "/api/v1/project-status/quality-requirements",
+            params={"requirement": "QR-MVP-A", "line": "mvp-a-management-foundation"},
+        ).json()["data"]
+        card = data["cards"]["formal_cases"]
+        assert card["total"] == 1
+        assert card["formal_passed"] == 0
+        assert card["pending_review"] == 1
+        assert card["passed"] == 1
 
 
 def test_open_high_defect_and_candidate_mismatch_block_product_acceptance(tmp_path) -> None:
