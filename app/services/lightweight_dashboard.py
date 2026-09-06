@@ -693,6 +693,24 @@ def _dashboard_v2(
     mvp_a_blocked = len([c for c in mvp_a_cases if c["status"] == "blocked"])
     mvp_a_rate = round(mvp_a_passed / mvp_a_total * 100, 1) if mvp_a_total > 0 else 87.2
 
+    prd_candidates = (
+        v.get("feishu_url")
+        for v in _mapping(payload.get("product_roadmap")).get("versions", [])
+        if v.get("feishu_url")
+    )
+    prd_url = _safe_external_url(
+        next(
+            prd_candidates,
+            "https://vcnzw9ygmgsx.feishu.cn/docx/XHu7dCKI2oYsWZx4oBQcnJwtnxR",
+        )
+    )
+    cases_url = _safe_external_url(
+        section.get("feishu_cases_url") or "https://vcnzw9ygmgsx.feishu.cn/docx/WnTKduhb1oA8UsxGscqc6UgPnug"
+    )
+    report_url = _safe_external_url(
+        section.get("feishu_report_url") or "https://vcnzw9ygmgsx.feishu.cn/docx/P5G7dnSxsolcKqxTVhecokFsnof"
+    )
+
     modules = [
         {
             "id": "mvp-a",
@@ -707,6 +725,11 @@ def _dashboard_v2(
             "cases_blocked": mvp_a_blocked,
             "active_step": "独立测试 (收口中)",
             "blocker_summary": f"尚余 {mvp_a_blocked} 条 Case 待收口；等待负责人确认",
+            "feishu_links": {
+                "prd_url": prd_url,
+                "cases_url": cases_url,
+                "report_url": report_url,
+            },
             "stepper": [
                 {"name": "需求冻结 ✓", "state": "done"},
                 {"name": "提测 ✓", "state": "done"},
@@ -727,6 +750,11 @@ def _dashboard_v2(
             "cases_blocked": 0,
             "active_step": "TR-P3契约 (当前)",
             "blocker_summary": "冻结 P3 字段级契约与测试夹具",
+            "feishu_links": {
+                "prd_url": None,
+                "cases_url": None,
+                "report_url": None,
+            },
             "stepper": [
                 {"name": "PRD初稿 ✓", "state": "done"},
                 {"name": "TR-P3契约 (当前)", "state": "current"},
@@ -747,6 +775,11 @@ def _dashboard_v2(
             "cases_blocked": 0,
             "active_step": "TR-P4 预研",
             "blocker_summary": "语音录制与转写整体后置",
+            "feishu_links": {
+                "prd_url": None,
+                "cases_url": None,
+                "report_url": None,
+            },
             "stepper": [
                 {"name": "TR-P4 预研", "state": "current"},
                 {"name": "契约冻结", "state": "pending"},
@@ -754,24 +787,6 @@ def _dashboard_v2(
             ],
         },
     ]
-
-    prd_candidates = (
-        v.get("feishu_url")
-        for v in _mapping(payload.get("product_roadmap")).get("versions", [])
-        if v.get("feishu_url")
-    )
-    prd_url = _safe_external_url(
-        next(
-            prd_candidates,
-            "https://vcnzw9ygmgsx.feishu.cn/docx/XHu7dCKI2oYsWZx4oBQcnJwtnxR",
-        )
-    )
-    cases_url = _safe_external_url(
-        section.get("feishu_cases_url") or "https://vcnzw9ygmgsx.feishu.cn/docx/WnTKduhb1oA8UsxGscqc6UgPnug"
-    )
-    report_url = _safe_external_url(
-        section.get("feishu_report_url") or "https://vcnzw9ygmgsx.feishu.cn/docx/P5G7dnSxsolcKqxTVhecokFsnof"
-    )
 
     tree = [
         {"id": "all", "label": "全部需求", "count": total_count},

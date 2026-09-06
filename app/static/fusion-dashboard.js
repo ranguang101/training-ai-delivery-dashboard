@@ -1,5 +1,6 @@
 /**
  * Fusion Dashboard v2.0 - Plane + MeterSphere Fusion Architecture Controller
+ * Context-aware Feishu links & Toast Interception Patch
  */
 
 (function () {
@@ -19,6 +20,34 @@
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#39;');
+  }
+
+  function showToast(msg, duration) {
+    duration = duration || 2500;
+    let container = document.getElementById('toast-container');
+    if (!container) {
+      container = document.createElement('div');
+      container.id = 'toast-container';
+      container.className = 'toast-container';
+      document.body.appendChild(container);
+    }
+    const toast = document.createElement('div');
+    toast.className = 'toast-message';
+    toast.textContent = msg;
+    container.appendChild(toast);
+
+    requestAnimationFrame(function () {
+      toast.classList.add('is-visible');
+    });
+
+    setTimeout(function () {
+      toast.classList.remove('is-visible');
+      setTimeout(function () {
+        if (toast.parentNode) {
+          toast.parentNode.removeChild(toast);
+        }
+      }, 300);
+    }, duration);
   }
 
   function init() {
@@ -60,6 +89,34 @@
         renderTable();
       });
     });
+
+    // 表头飞书用例表按钮拦截
+    const subCasesBtn = document.getElementById('sub-link-feishu-cases');
+    if (subCasesBtn) {
+      subCasesBtn.addEventListener('click', function (e) {
+        if (subCasesBtn.classList.contains('is-disabled')) {
+          e.preventDefault();
+          let msg = '💡 该模块尚未录入飞书测试用例矩阵';
+          if (currentModuleFilter.startsWith('mvp-b-ai')) {
+            msg = '💡 MVP-B AI 处于规划准备期，用例矩阵尚未建立';
+          } else if (currentModuleFilter.startsWith('mvp-b') || currentModuleFilter.startsWith('P3')) {
+            msg = '💡 MVP-B 当前处于需求契约准备阶段，测试用例矩阵待研发提测后生成';
+          }
+          showToast(msg);
+        }
+      });
+    }
+
+    // 抽屉底部飞书按钮拦截
+    const drawerFeishuBtn = document.getElementById('drawer-feishu-btn');
+    if (drawerFeishuBtn) {
+      drawerFeishuBtn.addEventListener('click', function (e) {
+        if (drawerFeishuBtn.classList.contains('is-disabled')) {
+          e.preventDefault();
+          showToast('💡 当前用例所属模块尚未录入飞书测试用例矩阵');
+        }
+      });
+    }
   }
 
   function loadDashboardData() {
@@ -76,6 +133,7 @@
         renderFeishuLinks(rawData.feishu_links || {});
         renderTree(rawData.tree || []);
         renderTable();
+        updateCasesActionButton();
       })
       .catch(function (err) {
         console.error('Dashboard load error:', err);
@@ -98,13 +156,49 @@
       reportBtn.href = links.report_url;
       reportBtn.style.display = 'inline-flex';
     }
-    const subCasesBtn = document.getElementById('sub-link-feishu-cases');
-    if (subCasesBtn && links.cases_url) {
-      subCasesBtn.href = links.cases_url;
+  }
+
+  function getModuleCasesUrl(modId) {
+    if (!rawData) return null;
+    if (modId === 'all') {
+      return (rawData.feishu_links && rawData.feishu_links.cases_url) || null;
     }
-    const drawerFeishuBtn = document.getElementById('drawer-feishu-btn');
-    if (drawerFeishuBtn && links.cases_url) {
-      drawerFeishuBtn.href = links.cases_url;
+    if (modId === 'mvp-a' || modId === 'P1' || modId === 'P2') {
+      const mvpA = (rawData.modules || []).find(m => m.id === 'mvp-a');
+      if (mvpA && mvpA.feishu_links && mvpA.feishu_links.cases_url) {
+        return mvpA.feishu_links.cases_url;
+      }
+      return (rawData.feishu_links && rawData.feishu_links.cases_url) || null;
+    }
+    const targetMod = (rawData.modules || []).find(m => m.id === modId);
+    if (targetMod && targetMod.feishu_links && targetMod.feishu_links.cases_url) {
+      return targetMod.feishu_links.cases_url;
+    }
+    return null;
+  }
+
+  function updateCasesActionButton() {
+    const btn = document.getElementById('sub-link-feishu-cases');
+    if (!btn) return;
+
+    if (currentModuleFilter === 'all') {
+      const url = getModuleCasesUrl('all');
+      btn.textContent = '查看全量基线用例表 (MVP-A) ↗';
+      btn.href = url || 'javascript:void(0)';
+      btn.classList.remove('is-disabled');
+      btn.removeAttribute('data-disabled');
+    } else if (currentModuleFilter === 'mvp-a' || currentModuleFilter === 'P1' || currentModuleFilter === 'P2') {
+      const url = getModuleCasesUrl('mvp-a');
+      btn.textContent = '在飞书查看完整矩阵 ↗';
+      btn.href = url || 'javascript:void(0)';
+      btn.classList.remove('is-disabled');
+      btn.removeAttribute('data-disabled');
+    } else {
+      // mvp-b, mvp-b-ai, P3, etc.
+      btn.textContent = '飞书用例表 (待生成) ⊘';
+      btn.href = 'javascript:void(0)';
+      btn.classList.add('is-disabled');
+      btn.setAttribute('data-disabled', 'true');
     }
   }
 
@@ -202,6 +296,7 @@
       currentModuleFilter = node.id;
       document.getElementById('pane-title').textContent = node.label;
       renderTable();
+      updateCasesActionButton();
     });
 
     parentEl.appendChild(nodeEl);
@@ -240,6 +335,7 @@
 
     document.getElementById('pane-title').textContent = targetLabel;
     renderTable();
+    updateCasesActionButton();
   }
 
   function renderTable() {
@@ -351,6 +447,25 @@
     if (stepsEl) stepsEl.textContent = item.steps || '';
     if (expectedEl) expectedEl.textContent = item.expected_result || '系统交互与数据流转正常';
     if (actualEl) actualEl.textContent = item.actual_result || '';
+
+    // 抽屉内飞书按钮同步状态
+    const drawerFeishuBtn = document.getElementById('drawer-feishu-btn');
+    if (drawerFeishuBtn) {
+      const modId = (item.branch || item.module || '').toLowerCase();
+      let itemCasesUrl = (rawData && rawData.feishu_links && rawData.feishu_links.cases_url) || null;
+      if (modId.startsWith('mvp-b') || modId.startsWith('p3')) {
+        itemCasesUrl = null;
+      }
+      if (itemCasesUrl) {
+        drawerFeishuBtn.href = itemCasesUrl;
+        drawerFeishuBtn.classList.remove('is-disabled');
+        drawerFeishuBtn.textContent = '飞书用例表直达 ↗';
+      } else {
+        drawerFeishuBtn.href = 'javascript:void(0)';
+        drawerFeishuBtn.classList.add('is-disabled');
+        drawerFeishuBtn.textContent = '飞书用例表 (待生成) ⊘';
+      }
+    }
 
     const backdrop = document.getElementById('drawer-backdrop');
     const panel = document.getElementById('drawer-panel');

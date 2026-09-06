@@ -253,4 +253,40 @@ test.describe('PRD v2.0 Fusion Dashboard (Plane + MeterSphere)', () => {
     await searchInput.fill('');
     await expect(page.locator('#case-tbody tr')).toHaveCount(3);
   });
+
+  test('context-aware feishu action button states, disabled interception and toast notification', async ({ page }) => {
+    await page.goto('/project-status/v2');
+
+    const subBtn = page.locator('#sub-link-feishu-cases');
+    const toast = page.locator('#toast-container .toast-message');
+
+    // 1. Initial / All state -> Enabled with baseline link
+    await expect(subBtn).toBeVisible();
+    await expect(subBtn).not.toHaveClass(/is-disabled/);
+    await expect(subBtn).toContainText('查看全量基线用例表 (MVP-A)');
+
+    // 2. Switch to MVP-B card -> Button becomes disabled & text updates
+    await page.locator('.module-card[data-module-id="mvp-b"]').click();
+    await expect(subBtn).toHaveClass(/is-disabled/);
+    await expect(subBtn).toContainText('待生成');
+
+    // 3. Click disabled button -> Prevent navigation, show Toast
+    await subBtn.click({ force: true });
+    await expect(toast).toBeVisible();
+    await expect(toast).toContainText('MVP-B 当前处于需求契约准备阶段');
+
+    // 4. Switch to MVP-A card -> Button restored to enabled
+    await page.locator('.module-card[data-module-id="mvp-a"]').click();
+    await expect(subBtn).not.toHaveClass(/is-disabled/);
+    await expect(subBtn).toContainText('完整矩阵');
+
+    // 5. Open drawer for an MVP-A case -> Drawer feishu button is enabled
+    const firstRow = page.locator('#case-tbody tr').first();
+    await firstRow.click();
+    await expect(page.locator('#drawer-panel')).toHaveClass(/open/);
+    const drawerBtn = page.locator('#drawer-feishu-btn');
+    await expect(drawerBtn).toBeVisible();
+    await expect(drawerBtn).not.toHaveClass(/is-disabled/);
+    await expect(drawerBtn).toContainText('飞书用例表直达');
+  });
 });

@@ -28,6 +28,7 @@ def test_fusion_dashboard_v2_page_renders_cleanly() -> None:
         assert 'id="tree-list-container"' in resp.text
         assert 'id="case-tbody"' in resp.text
         assert 'id="drawer-panel"' in resp.text
+        assert 'id="toast-container"' in resp.text
         assert 'fusion-dashboard.css' in resp.text
         assert 'fusion-dashboard.js' in resp.text
 
@@ -57,6 +58,14 @@ def test_fusion_dashboard_v2_api_contract_and_projection() -> None:
         mvp_b = next(m for m in modules if m["id"] == "mvp-b")
         assert mvp_b["pass_rate"] == 0
         assert mvp_b["cases_total"] in {0, 2}
+
+        # 验证每个模块注入了专属 feishu_links 字段
+        for m in modules:
+            assert "feishu_links" in m
+            assert isinstance(m["feishu_links"], dict)
+        assert mvp_a["feishu_links"]["cases_url"] is not None
+        assert mvp_a["feishu_links"]["cases_url"].startswith("https://")
+        assert mvp_b["feishu_links"]["cases_url"] is None
 
         # 飞书外链安全检查
         feishu = data["feishu_links"]
